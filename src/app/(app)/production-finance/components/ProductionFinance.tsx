@@ -15,6 +15,7 @@ export function ProductionFinance({
   onLogFinancialTransaction,
   onViewCowDetails,
   onPeriodChange,
+  onSuccess,
 }: ProductionFinanceProps) {
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -38,8 +39,8 @@ export function ProductionFinance({
         highestExpenseCategories={highestExpenseCategories}
         onViewCowDetails={onViewCowDetails}
       />
-      <MilkEntryTable />
-      <FinancialTransactionForm />
+      <MilkEntryTable onSuccess={onSuccess} />
+      <FinancialTransactionForm onSuccess={onSuccess} />
     </div>
   );
 }

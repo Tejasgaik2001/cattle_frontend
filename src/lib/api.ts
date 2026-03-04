@@ -27,14 +27,18 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle token expiration (optional for now but good practice)
+// Response interceptor to unwrap API envelope and handle errors
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Unwrap the { success, data, timestamp } envelope from TransformInterceptor
+        if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+            response.data = response.data.data;
+        }
+        return response;
+    },
     async (error) => {
-        // If 401, maybe redirect to login or refresh token
-        // For now, just reject
+        // If 401, redirect to login
         if (error.response?.status === 401) {
-            // Clear storage and redirect if 401 comes from a protected route
             if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('user');

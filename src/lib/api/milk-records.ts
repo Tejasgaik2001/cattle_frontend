@@ -1,4 +1,5 @@
 import { api } from '../api';
+import { getFarmId } from '../farm';
 
 export interface CreateMilkRecordDto {
     cowId: string;
@@ -8,12 +9,7 @@ export interface CreateMilkRecordDto {
 }
 
 export interface BulkMilkRecordDto {
-    date: string; // YYYY-MM-DD
-    records: {
-        cowId: string;
-        amAmount?: number;
-        pmAmount?: number;
-    }[];
+    records: CreateMilkRecordDto[];
 }
 
 export const milkRecordsApi = {
@@ -21,7 +17,8 @@ export const milkRecordsApi = {
      * Create a single milk record
      */
     async createMilkRecord(data: CreateMilkRecordDto) {
-        const response = await api.post('/milk-records', data);
+        const farmId = await getFarmId();
+        const response = await api.post(`/farms/${farmId}/milk-records`, data);
         return response.data;
     },
 
@@ -29,25 +26,26 @@ export const milkRecordsApi = {
      * Create multiple milk records at once (bulk entry)
      */
     async createBulkMilkRecords(data: BulkMilkRecordDto) {
-        const response = await api.post('/milk-records/bulk', data);
+        const farmId = await getFarmId();
+        const response = await api.post(`/farms/${farmId}/milk-records/bulk`, data);
         return response.data;
     },
 
     /**
      * Get today's milk production stats
      */
-    async getTodayStats(farmId: string) {
-        const response = await api.get(`/farms/${farmId}/milk-records/today-stats`);
+    async getTodayStats() {
+        const farmId = await getFarmId();
+        const response = await api.get(`/farms/${farmId}/milk-records/today`);
         return response.data;
     },
 
     /**
-     * Get milk records for a specific cow
+     * Get milk records with optional filters
      */
-    async getCowMilkRecords(cowId: string, startDate?: string, endDate?: string) {
-        const response = await api.get('/milk-records', {
-            params: { cowId, startDate, endDate }
-        });
+    async getMilkRecords(params?: { cowId?: string; startDate?: string; endDate?: string }) {
+        const farmId = await getFarmId();
+        const response = await api.get(`/farms/${farmId}/milk-records`, { params });
         return response.data;
-    }
+    },
 };

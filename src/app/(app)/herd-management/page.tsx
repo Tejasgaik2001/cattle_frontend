@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { HerdList } from './components/HerdList';
 import { AddCowDialog } from './components/AddCowDialog';
 import { cowsApi } from '@/lib/api/cows';
@@ -9,6 +9,7 @@ import type { Cow } from '@/types';
 
 export default function HerdManagementPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [cows, setCows] = useState<Cow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showAddCowDialog, setShowAddCowDialog] = useState(false);
@@ -16,7 +17,19 @@ export default function HerdManagementPage() {
     const fetchCows = async () => {
         try {
             setIsLoading(true);
-            const data = await cowsApi.fetchCows();
+            const params: any = {};
+            
+            // Map search params to API filter params
+            const filter = searchParams.get('filter');
+            if (filter === 'underTreatment') params.isUnderTreatment = 'true';
+            if (filter === 'pregnant') params.isPregnant = 'true';
+            if (filter === 'healthIssuesRecent') params.healthIssuesRecent = 'true';
+            if (filter === 'vaccinationsDueOverdue') params.vaccinationsDue = 'true';
+            
+            // Also support direct lifecycle status if needed
+            if (searchParams.get('status')) params.lifecycleStatus = searchParams.get('status');
+
+            const data = await cowsApi.fetchCows(params);
             setCows(data);
         } catch (error) {
             console.error('Failed to fetch cows:', error);
@@ -27,7 +40,7 @@ export default function HerdManagementPage() {
 
     useEffect(() => {
         fetchCows();
-    }, []);
+    }, [searchParams]);
 
     const handleViewCowDetails = (cowId: string) => {
         router.push(`/herd-management/${cowId}`);

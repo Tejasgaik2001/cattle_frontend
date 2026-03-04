@@ -1,5 +1,5 @@
-import type { HealthBreedingOverview } from '../types';
-import { Card, CardContent, CardHeader, CardTitle } from '../../shell/components/ui/card';
+import type { HealthBreedingOverview } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Stethoscope, Baby, Activity, ShieldCheck } from 'lucide-react'; // Using icons for metrics
 
 interface HealthBreedingOverviewCardProps {

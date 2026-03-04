@@ -109,6 +109,7 @@ export default function ProductionFinancePage() {
             onLogFinancialTransaction={handleLogFinancialTransaction}
             onViewCowDetails={handleViewCowDetails}
             onPeriodChange={handlePeriodChange}
+            onSuccess={fetchData}
         />
     );
 }

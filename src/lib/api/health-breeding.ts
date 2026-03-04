@@ -1,20 +1,40 @@
 import { api } from '../api';
-import type { HealthBreedingOverview, HealthBreedingTask } from '@/types';
+import { getFarmId } from '../farm';
+
+export interface HealthBreedingOverview {
+    cowsUnderTreatment: number;
+    pregnantCows: number;
+    healthIssuesLast7Days: number;
+    vaccinationsDueOverdueCount: number;
+}
+
+export interface HealthBreedingTask {
+    id: string;
+    cowId: string;
+    cowTagId: string;
+    cowName: string | null;
+    taskType: 'VACCINATION_DUE' | 'HEALTH_FOLLOWUP' | 'PREGNANCY_CHECK' | 'CALVING_EXPECTED' | 'BREEDING_RECOMMENDATION';
+    dueDate: string;
+    urgency: 'high' | 'medium' | 'low';
+    message: string;
+}
 
 export const healthBreedingApi = {
     /**
-     * Fetch aggregated overview metrics for health and breeding
+     * Fetch aggregated metrics for health and breeding
      */
-    async fetchOverview(farmId: string): Promise<HealthBreedingOverview> {
+    async getOverview(): Promise<HealthBreedingOverview> {
+        const farmId = await getFarmId();
         const response = await api.get(`/farms/${farmId}/health-breeding/overview`);
         return response.data;
     },
 
     /**
-     * Fetch upcoming and overdue health/breeding tasks
+     * Fetch upcoming/overdue tasks
      */
-    async fetchTasks(farmId: string): Promise<HealthBreedingTask[]> {
+    async getTasks(): Promise<HealthBreedingTask[]> {
+        const farmId = await getFarmId();
         const response = await api.get(`/farms/${farmId}/health-breeding/tasks`);
         return response.data;
-    }
+    },
 };

@@ -5,9 +5,10 @@ import type { Cow } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ChevronRight } from 'lucide-react';
+import { PlusCircle, Search, ChevronRight, XIcon } from 'lucide-react';
 
 interface HerdListProps {
     cows: Cow[];
@@ -17,8 +18,11 @@ interface HerdListProps {
 }
 
 export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }: HerdListProps) {
+    const searchParams = useSearchParams();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'sold' | 'deceased'>('all');
+
+    const activeFilter = searchParams.get('filter');
 
     const filteredCows = useMemo(() => {
         return cows.filter(cow => {
@@ -28,6 +32,16 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
             return matchesSearch && matchesStatus;
         });
     }, [cows, searchTerm, filterStatus]);
+
+    const getFilterLabel = (filter: string) => {
+        switch (filter) {
+            case 'underTreatment': return 'Cows Under Treatment';
+            case 'pregnant': return 'Pregnant Cows';
+            case 'healthIssuesRecent': return 'Recent Health Issues';
+            case 'vaccinationsDueOverdue': return 'Vaccinations Due';
+            default: return filter;
+        }
+    };
 
     const getStatusBadgeVariant = (status: string) => {
         switch (status) {
@@ -53,11 +67,19 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
         return (
             <div className="p-4 md:p-6 space-y-6">
                 <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                    <p className="text-lg text-slate-500 dark:text-slate-400">No cows in your herd yet.</p>
-                    <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                        <PlusCircle className="h-5 w-5 mr-2" />
-                        Add Your First Cow
-                    </Button>
+                    <p className="text-lg text-slate-500 dark:text-slate-400">
+                        {activeFilter ? `No cows matching "${getFilterLabel(activeFilter)}".` : "No cows in your herd yet."}
+                    </p>
+                    {activeFilter ? (
+                         <Button onClick={() => window.location.href = '/herd-management'} className="bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600">
+                            Clear Filter
+                        </Button>
+                    ) : (
+                        <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <PlusCircle className="h-5 w-5 mr-2" />
+                            Add Your First Cow
+                        </Button>
+                    )}
                 </div>
             </div>
         );
@@ -67,7 +89,17 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
         <div className="p-4 md:p-6 space-y-6">
             {/* Header and Add Cow Button */}
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Herd</h2>
+                <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Herd</h2>
+                    {activeFilter && (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1 py-1">
+                            {getFilterLabel(activeFilter)}
+                            <button onClick={() => window.location.href = '/herd-management'}>
+                                <XIcon className="h-3 w-3 ml-1 hover:text-red-500" />
+                            </button>
+                        </Badge>
+                    )}
+                </div>
                 <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                     <PlusCircle className="h-5 w-5 mr-2" />
                     Add New Cow

@@ -1,5 +1,5 @@
-import type { HealthBreedingTask } from '../types';
-import { Card, CardContent, CardHeader, CardTitle } from '../../shell/components/ui/card';
+import type { HealthBreedingTask } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, CheckCircle, ChevronRight, Calendar } from 'lucide-react';
 
 interface UpcomingTasksListProps {

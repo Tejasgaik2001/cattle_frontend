@@ -134,14 +134,13 @@ export function AddEventDialog({ open, onOpenChange, cowId, onSuccess }: AddEven
             }
 
             const eventData: CreateCowEventDto = {
-                cowId,
                 type: eventType,
                 date,
                 description,
                 ...(metadata && { metadata }),
             };
 
-            await cowEventsApi.createCowEvent(eventData);
+            await cowEventsApi.createCowEvent(cowId, eventData);
 
             resetForm();
             onSuccess();

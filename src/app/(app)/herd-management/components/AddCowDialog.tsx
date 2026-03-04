@@ -57,8 +57,9 @@ export function AddCowDialog({ open, onOpenChange, onSuccess }: AddCowDialogProp
             }
 
             // Clean up optional fields
+            const { lifecycleStatus, ...restFormData } = formData;
             const dataToSubmit = {
-                ...formData,
+                ...restFormData,
                 name: formData.name || undefined,
                 acquisitionSource: formData.acquisitionSource || undefined,
                 motherId: formData.motherId || undefined,

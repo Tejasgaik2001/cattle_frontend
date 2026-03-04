@@ -72,4 +72,6 @@ export interface ProductionFinanceProps {
   onViewCowDetails?: (cowId: string) => void;
   /** Called when the user wants to change the reporting period for the overview. */
   onPeriodChange?: (period: string) => void;
+  /** Called after a successful data entry to refresh the dashboard. */
+  onSuccess?: () => void;
 }

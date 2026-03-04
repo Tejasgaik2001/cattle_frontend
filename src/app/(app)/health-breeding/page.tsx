@@ -19,22 +19,10 @@ export default function HealthBreedingPage() {
             setIsLoading(true);
             setError(null);
 
-            // 1. Get user's farms to find the active farmId
-            // In a real app, this would be managed by a global context/state
-            const farmsResponse = await api.get('/farms');
-            const farms = farmsResponse.data;
-
-            if (!farms || farms.length === 0) {
-                setError("No farms found for this user.");
-                return;
-            }
-
-            const farmId = farms[0].id; // Use first farm for now
-
-            // 2. Fetch overview and tasks
+            // Fetch overview and tasks using the API client
             const [overviewData, tasksData] = await Promise.all([
-                healthBreedingApi.fetchOverview(farmId),
-                healthBreedingApi.fetchTasks(farmId)
+                healthBreedingApi.getOverview(),
+                healthBreedingApi.getTasks()
             ]);
 
             setOverview(overviewData);

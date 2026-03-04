@@ -6,6 +6,7 @@ export interface CreateFinancialTransactionDto {
     amount: number;
     date: string; // YYYY-MM-DD
     description?: string;
+    cowId?: string;
 }
 
 export interface UpdateFinancialTransactionDto {
