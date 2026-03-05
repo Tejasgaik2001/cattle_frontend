@@ -1,68 +1,84 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { HealthBreeding } from './components/HealthBreeding';
+import React, { useState, useEffect, useCallback } from 'react';
+import { HealthBreedingOverviewCard } from './components/HealthBreedingOverviewCard';
+import { UpcomingTasksList } from './components/UpcomingTasksList';
+import { CowHealthTable } from './components/CowHealthTable';
+import { CowDetailDrawer } from './components/CowDetailDrawer';
+import { AddHealthRecordModal } from './components/AddHealthRecordModal';
+import { AddBreedingEventModal } from './components/AddBreedingEventModal';
 import { healthBreedingApi } from '@/lib/api/health-breeding';
-import { api } from '@/lib/api';
-import type { HealthBreedingOverview, HealthBreedingTask } from '@/types';
+import type { HealthBreedingOverview, HealthBreedingTask, CowHealthBreedingRow } from '@/lib/api/health-breeding';
 
 export default function HealthBreedingPage() {
-    const router = useRouter();
     const [overview, setOverview] = useState<HealthBreedingOverview | null>(null);
     const [tasks, setTasks] = useState<HealthBreedingTask[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [cows, setCows] = useState<CowHealthBreedingRow[]>([]);
+    const [isLoadingOverview, setIsLoadingOverview] = useState(true);
+    const [isLoadingCows, setIsLoadingCows] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchData = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
+    // Drawer & Modal state
+    const [drawerCow, setDrawerCow] = useState<CowHealthBreedingRow | null>(null);
+    const [healthModalCow, setHealthModalCow] = useState<CowHealthBreedingRow | null>(null);
+    const [breedingModalCow, setBreedingModalCow] = useState<CowHealthBreedingRow | null>(null);
 
-            // Fetch overview and tasks using the API client
+    const fetchOverviewAndTasks = useCallback(async () => {
+        try {
+            setIsLoadingOverview(true);
             const [overviewData, tasksData] = await Promise.all([
                 healthBreedingApi.getOverview(),
-                healthBreedingApi.getTasks()
+                healthBreedingApi.getTasks(),
             ]);
-
             setOverview(overviewData);
             setTasks(tasksData);
-        } catch (err: any) {
-            console.error('Failed to fetch health & breeding data:', err);
-            setError('Failed to load health and breeding data. Please try again later.');
+        } catch (err) {
+            console.error('Failed to fetch overview/tasks:', err);
+            setError('Failed to load health and breeding data.');
         } finally {
-            setIsLoading(false);
+            setIsLoadingOverview(false);
         }
-    };
-
-    useEffect(() => {
-        fetchData();
     }, []);
 
-    const handleViewFilteredHerd = (filterType: string) => {
-        // Navigation logic for filters
-        router.push(`/herd-management?filter=${filterType}`);
-    };
+    const fetchCowList = useCallback(async () => {
+        try {
+            setIsLoadingCows(true);
+            const cowData = await healthBreedingApi.getCowList();
+            setCows(cowData);
+        } catch (err) {
+            console.error('Failed to fetch cow list:', err);
+        } finally {
+            setIsLoadingCows(false);
+        }
+    }, []);
 
-    const handleViewTaskDetails = (taskId: string, cowId: string) => {
-        // Navigate to cow profile
-        router.push(`/herd-management/${cowId}`);
-    };
+    useEffect(() => {
+        fetchOverviewAndTasks();
+        fetchCowList();
+    }, []);
 
-    if (isLoading) {
+    const handleFormSuccess = useCallback(() => {
+        // Refresh both overview and cow list after adding a record
+        fetchOverviewAndTasks();
+        fetchCowList();
+    }, [fetchOverviewAndTasks, fetchCowList]);
+
+    const handleOpenHealthModal = useCallback((cow: CowHealthBreedingRow) => {
+        setDrawerCow(null);     // Close drawer if open
+        setHealthModalCow(cow);
+    }, []);
+
+    const handleOpenBreedingModal = useCallback((cow: CowHealthBreedingRow) => {
+        setDrawerCow(null);     // Close drawer if open
+        setBreedingModalCow(cow);
+    }, []);
+
+    if (!isLoadingOverview && error && !overview) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
+            <div className="p-8 text-center bg-slate-800/50 rounded-xl border border-slate-700 shadow-sm">
+                <p className="text-slate-400 mb-4">{error}</p>
                 <button
-                    onClick={fetchData}
+                    onClick={() => { fetchOverviewAndTasks(); fetchCowList(); }}
                     className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                     Retry
@@ -71,20 +87,77 @@ export default function HealthBreedingPage() {
         );
     }
 
-    if (!overview) return null;
+    const defaultOverview: HealthBreedingOverview = {
+        cowsUnderTreatment: 0,
+        pregnantCows: 0,
+        healthIssuesLast7Days: 0,
+        vaccinationsDueOverdueCount: 0,
+    };
 
     return (
         <div className="space-y-6">
+            {/* Page Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Health & Breeding</h1>
-                <p className="text-slate-600 dark:text-slate-400">Herd-level overview and task management</p>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-50">Health & Breeding</h1>
+                <p className="text-slate-400 mt-1">Cow-level health records, breeding events, and reminders</p>
             </div>
 
-            <HealthBreeding
-                overview={overview}
-                upcomingTasks={tasks}
-                onViewFilteredHerd={handleViewFilteredHerd}
-                onViewTaskDetails={handleViewTaskDetails}
+            {/* Section 1 – Overview Cards */}
+            {isLoadingOverview ? (
+                <div className="h-36 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+                </div>
+            ) : (
+                <HealthBreedingOverviewCard
+                    overview={overview ?? defaultOverview}
+                    onViewFilteredHerd={(filter) => {
+                        // Scroll to cow table and pre-apply filter
+                        const el = document.getElementById('cow-health-table');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                />
+            )}
+
+            {/* Section 2 – Cow Health & Breeding Table */}
+            <div id="cow-health-table">
+                <CowHealthTable
+                    cows={cows}
+                    isLoading={isLoadingCows}
+                    onViewHistory={setDrawerCow}
+                    onAddHealthRecord={handleOpenHealthModal}
+                    onAddBreedingEvent={handleOpenBreedingModal}
+                />
+            </div>
+
+            {/* Section 3 – Upcoming Tasks */}
+            <UpcomingTasksList
+                tasks={tasks}
+                onViewTaskDetails={(taskId, cowId) => {
+                    const cow = cows.find(c => c.id === cowId);
+                    if (cow) setDrawerCow(cow);
+                }}
+            />
+
+            {/* Cow Detail Drawer */}
+            <CowDetailDrawer
+                cow={drawerCow}
+                onClose={() => setDrawerCow(null)}
+                onAddHealthRecord={handleOpenHealthModal}
+                onAddBreedingEvent={handleOpenBreedingModal}
+            />
+
+            {/* Add Health Record Modal */}
+            <AddHealthRecordModal
+                cow={healthModalCow}
+                onClose={() => setHealthModalCow(null)}
+                onSuccess={handleFormSuccess}
+            />
+
+            {/* Add Breeding Event Modal */}
+            <AddBreedingEventModal
+                cow={breedingModalCow}
+                onClose={() => setBreedingModalCow(null)}
+                onSuccess={handleFormSuccess}
             />
         </div>
     );
