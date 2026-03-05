@@ -24,8 +24,7 @@ export const healthBreedingApi = {
      * Fetch aggregated metrics for health and breeding
      */
     async getOverview(): Promise<HealthBreedingOverview> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/health-breeding/overview`);
+        const response = await api.get(`/health-breeding/overview`);
         return response.data;
     },
 
@@ -33,8 +32,7 @@ export const healthBreedingApi = {
      * Fetch upcoming/overdue tasks
      */
     async getTasks(): Promise<HealthBreedingTask[]> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/health-breeding/tasks`);
+        const response = await api.get(`/health-breeding/tasks`);
         return response.data;
     },
 };

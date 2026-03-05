@@ -6,7 +6,7 @@ export const dashboardApi = {
      * Fetch dashboard summary with aggregated metrics
      */
     async fetchSummary(farmId: string): Promise<DashboardSummary> {
-        const response = await api.get(`/farms/${farmId}/dashboard/summary`);
+        const response = await api.get(`/dashboard/summary`);
         return response.data;
     },
 
@@ -14,7 +14,7 @@ export const dashboardApi = {
      * Fetch critical alerts for the farm
      */
     async fetchAlerts(farmId: string): Promise<Alert[]> {
-        const response = await api.get(`/farms/${farmId}/dashboard/alerts`);
+        const response = await api.get(`/dashboard/alerts`);
         return response.data;
     }
 };

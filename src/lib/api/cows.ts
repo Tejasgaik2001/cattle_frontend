@@ -39,8 +39,7 @@ export const cowsApi = {
         healthIssuesRecent?: string;
         vaccinationsDue?: string;
     }): Promise<Cow[]> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/cows`, { params });
+        const response = await api.get(`/cows`, { params });
         // Backend returns paginated result { data: Cow[], meta: {...} }
         return response.data?.data || response.data;
     },
@@ -49,8 +48,7 @@ export const cowsApi = {
      * Fetch a specific cow by ID
      */
     async fetchCowById(id: string): Promise<Cow> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/cows/${id}`);
+        const response = await api.get(`/cows/${id}`);
         return response.data;
     },
 
@@ -58,8 +56,7 @@ export const cowsApi = {
      * Create a new cow
      */
     async createCow(data: CreateCowDto): Promise<Cow> {
-        const farmId = await getFarmId();
-        const response = await api.post(`/farms/${farmId}/cows`, data);
+        const response = await api.post(`/cows`, data);
         return response.data;
     },
 
@@ -67,8 +64,7 @@ export const cowsApi = {
      * Update an existing cow
      */
     async updateCow(id: string, data: UpdateCowDto): Promise<Cow> {
-        const farmId = await getFarmId();
-        const response = await api.patch(`/farms/${farmId}/cows/${id}`, data);
+        const response = await api.patch(`/cows/${id}`, data);
         return response.data;
     },
 
@@ -79,8 +75,7 @@ export const cowsApi = {
         id: string,
         status: 'active' | 'sold' | 'deceased'
     ): Promise<Cow> {
-        const farmId = await getFarmId();
-        const response = await api.patch(`/farms/${farmId}/cows/${id}/lifecycle`, { lifecycleStatus: status });
+        const response = await api.patch(`/cows/${id}/lifecycle`, { lifecycleStatus: status });
         return response.data;
     },
 
@@ -88,16 +83,14 @@ export const cowsApi = {
      * Delete a cow
      */
     async deleteCow(id: string): Promise<void> {
-        const farmId = await getFarmId();
-        await api.delete(`/farms/${farmId}/cows/${id}`);
+        await api.delete(`/cows/${id}`);
     },
 
     /**
      * Get herd statistics
      */
     async getHerdStats(): Promise<{ total: number; active: number; sold: number; deceased: number }> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/cows/stats`);
+        const response = await api.get(`/cows/stats`);
         return response.data;
     },
 
@@ -105,8 +98,7 @@ export const cowsApi = {
      * Get active female cows (for dropdowns)
      */
     async getActiveFemales(): Promise<{ id: string; tagId: string; name: string | null }[]> {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/cows/active-females`);
+        const response = await api.get(`/cows/active-females`);
         return response.data;
     },
 };

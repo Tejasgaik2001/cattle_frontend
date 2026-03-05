@@ -22,7 +22,7 @@ export const financialApi = {
      * Create a new financial transaction
      */
     async createTransaction(farmId: string, data: CreateFinancialTransactionDto) {
-        const response = await api.post(`/farms/${farmId}/financial/transactions`, data);
+        const response = await api.post(`/financial/transactions`, data);
         return response.data;
     },
 
@@ -30,7 +30,7 @@ export const financialApi = {
      * Get all transactions for a farm
      */
     async getTransactions(farmId: string, startDate?: string, endDate?: string) {
-        const response = await api.get(`/farms/${farmId}/financial/transactions`, {
+        const response = await api.get(`/financial/transactions`, {
             params: { startDate, endDate }
         });
         return response.data;
@@ -40,7 +40,7 @@ export const financialApi = {
      * Get financial overview
      */
     async getOverview(farmId: string, startDate?: string, endDate?: string) {
-        const response = await api.get(`/farms/${farmId}/financial/overview`, {
+        const response = await api.get(`/financial/overview`, {
             params: { startDate, endDate }
         });
         return response.data;
@@ -50,7 +50,7 @@ export const financialApi = {
      * Get expense breakdown by category
      */
     async getExpenseBreakdown(farmId: string, startDate?: string, endDate?: string) {
-        const response = await api.get(`/farms/${farmId}/financial/expense-breakdown`, {
+        const response = await api.get(`/financial/expense-breakdown`, {
             params: { startDate, endDate }
         });
         return response.data;
@@ -60,7 +60,7 @@ export const financialApi = {
      * Update a transaction
      */
     async updateTransaction(farmId: string, transactionId: string, data: UpdateFinancialTransactionDto) {
-        const response = await api.patch(`/farms/${farmId}/financial/transactions/${transactionId}`, data);
+        const response = await api.patch(`/financial/transactions/${transactionId}`, data);
         return response.data;
     },
 
@@ -68,6 +68,6 @@ export const financialApi = {
      * Delete a transaction
      */
     async deleteTransaction(farmId: string, transactionId: string) {
-        await api.delete(`/farms/${farmId}/financial/transactions/${transactionId}`);
+        await api.delete(`/financial/transactions/${transactionId}`);
     }
 };

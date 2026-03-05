@@ -17,8 +17,7 @@ export const milkRecordsApi = {
      * Create a single milk record
      */
     async createMilkRecord(data: CreateMilkRecordDto) {
-        const farmId = await getFarmId();
-        const response = await api.post(`/farms/${farmId}/milk-records`, data);
+        const response = await api.post(`/milk-records`, data);
         return response.data;
     },
 
@@ -26,8 +25,7 @@ export const milkRecordsApi = {
      * Create multiple milk records at once (bulk entry)
      */
     async createBulkMilkRecords(data: BulkMilkRecordDto) {
-        const farmId = await getFarmId();
-        const response = await api.post(`/farms/${farmId}/milk-records/bulk`, data);
+        const response = await api.post(`/milk-records/bulk`, data);
         return response.data;
     },
 
@@ -35,8 +33,7 @@ export const milkRecordsApi = {
      * Get today's milk production stats
      */
     async getTodayStats() {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/milk-records/today`);
+        const response = await api.get(`/milk-records/today`);
         return response.data;
     },
 
@@ -44,8 +41,7 @@ export const milkRecordsApi = {
      * Get milk records with optional filters
      */
     async getMilkRecords(params?: { cowId?: string; startDate?: string; endDate?: string }) {
-        const farmId = await getFarmId();
-        const response = await api.get(`/farms/${farmId}/milk-records`, { params });
+        const response = await api.get(`/milk-records`, { params });
         return response.data;
     },
 };

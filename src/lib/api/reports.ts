@@ -14,7 +14,7 @@ export const reportsApi = {
         startDate?: string,
         endDate?: string
     ): Promise<MilkProductionTrendData[]> {
-        const response = await api.get(`/farms/${farmId}/reports/milk-production-trends`, {
+        const response = await api.get(`/reports/milk-production-trends`, {
             params: { startDate, endDate }
         });
         return response.data;
@@ -28,7 +28,7 @@ export const reportsApi = {
         startDate?: string,
         endDate?: string
     ): Promise<FinancialTrendData[]> {
-        const response = await api.get(`/farms/${farmId}/reports/financial-trends`, {
+        const response = await api.get(`/reports/financial-trends`, {
             params: { startDate, endDate }
         });
         return response.data;
@@ -42,7 +42,7 @@ export const reportsApi = {
         startDate?: string,
         endDate?: string
     ): Promise<ExpenseBreakdownData[]> {
-        const response = await api.get(`/farms/${farmId}/reports/expense-breakdown`, {
+        const response = await api.get(`/reports/expense-breakdown`, {
             params: { startDate, endDate }
         });
         return response.data;
