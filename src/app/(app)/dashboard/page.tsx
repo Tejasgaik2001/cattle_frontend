@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { DashboardAlerts } from './components/DashboardAlerts';
 import { dashboardApi } from '@/lib/api/dashboard';
 import { api } from '@/lib/api';
-import type { DashboardSummary, Alert } from './types';
+import type { DashboardSummary, Alert, WeeklyMilkPoint, ActivityItem } from './types';
 
 export default function DashboardPage() {
     const router = useRouter();
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [weeklyTrend, setWeeklyTrend] = useState<WeeklyMilkPoint[]>([]);
+    const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -30,14 +32,18 @@ export default function DashboardPage() {
 
             const farmId = farms[0].id; // Use first farm for now
 
-            // 2. Fetch dashboard summary and alerts
-            const [summaryData, alertsData] = await Promise.all([
+            // 2. Fetch all dashboard data in parallel
+            const [summaryData, alertsData, trendData, activityData] = await Promise.all([
                 dashboardApi.fetchSummary(farmId),
-                dashboardApi.fetchAlerts(farmId)
+                dashboardApi.fetchAlerts(farmId),
+                dashboardApi.fetchWeeklyTrend().catch(() => []),
+                dashboardApi.fetchRecentActivity().catch(() => []),
             ]);
 
             setSummary(summaryData);
             setAlerts(alertsData);
+            setWeeklyTrend(trendData);
+            setRecentActivity(activityData);
         } catch (err: any) {
             console.error('Failed to fetch dashboard data:', err);
             setError('Failed to load dashboard data. Please try again later.');
@@ -51,23 +57,23 @@ export default function DashboardPage() {
     }, []);
 
     const handleViewAlertAction = (alertId: string, cowId: string) => {
-        // Navigate to the cow's profile
         router.push(`/herd-management/${cowId}`);
     };
 
     const handleRecordMilk = () => {
-        // Navigate to production & finance page
         router.push('/production-finance');
     };
 
     const handleLogHealthEvent = () => {
-        // Navigate to health & breeding page
         router.push('/health-breeding');
     };
 
     const handleAddCow = () => {
-        // Navigate to herd management page
         router.push('/herd-management');
+    };
+
+    const handleRecordExpense = () => {
+        router.push('/production-finance');
     };
 
     if (isLoading) {
@@ -102,10 +108,13 @@ export default function DashboardPage() {
             <DashboardAlerts
                 summary={summary}
                 alerts={alerts}
+                weeklyTrend={weeklyTrend}
+                recentActivity={recentActivity}
                 onViewAlertAction={handleViewAlertAction}
                 onRecordMilk={handleRecordMilk}
                 onLogHealthEvent={handleLogHealthEvent}
                 onAddCow={handleAddCow}
+                onRecordExpense={handleRecordExpense}
             />
         </div>
     );

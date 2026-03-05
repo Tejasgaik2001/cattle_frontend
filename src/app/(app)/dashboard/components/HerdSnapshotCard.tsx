@@ -1,31 +1,65 @@
-import { UsersRound, Syringe, Baby, HeartPulse } from 'lucide-react';
+import { UsersRound, Milk, Baby, HeartPulse, Sprout } from 'lucide-react';
 
 interface HerdSnapshotCardProps {
   totalHerdSize: number;
   lactatingCowsCount: number;
   pregnantCowsCount: number;
   cowsUnderTreatmentCount: number;
+  youngCattleCount: number;
 }
 
 const snapshotItems = [
-  { key: 'totalHerdSize', label: 'Total Herd', icon: UsersRound },
-  { key: 'lactatingCowsCount', label: 'Lactating', icon: Syringe }, // Using Syringe to represent milking
-  { key: 'pregnantCowsCount', label: 'Pregnant', icon: Baby },
-  { key: 'cowsUnderTreatmentCount', label: 'Under Treatment', icon: HeartPulse },
+  {
+    key: 'totalHerdSize' as const,
+    label: 'Total Cows',
+    icon: UsersRound,
+    color: 'text-slate-600 dark:text-slate-300',
+    bg: 'bg-slate-100 dark:bg-slate-700',
+  },
+  {
+    key: 'lactatingCowsCount' as const,
+    label: 'Lactating',
+    icon: Milk,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+  },
+  {
+    key: 'pregnantCowsCount' as const,
+    label: 'Pregnant',
+    icon: Baby,
+    color: 'text-violet-600 dark:text-violet-400',
+    bg: 'bg-violet-50 dark:bg-violet-900/30',
+  },
+  {
+    key: 'cowsUnderTreatmentCount' as const,
+    label: 'Under Treatment',
+    icon: HeartPulse,
+    color: 'text-red-500 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-900/30',
+  },
+  {
+    key: 'youngCattleCount' as const,
+    label: 'Young Cattle',
+    icon: Sprout,
+    color: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-900/30',
+  },
 ];
 
 export function HerdSnapshotCard(props: HerdSnapshotCardProps) {
   return (
-    <div className="bg-white dark:bg-slate-800/50 p-6 rounded-lg shadow-sm">
-      <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Herd Snapshot</h3>
-      <div className="grid grid-cols-2 gap-4">
+    <div className="bg-white dark:bg-slate-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Herd Snapshot</h3>
+      <div className="space-y-2.5">
         {snapshotItems.map((item) => (
-          <div key={item.key} className="flex items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-            <item.icon className="h-6 w-6 text-emerald-600 dark:text-emerald-400 mr-3" />
-            <div>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">{props[item.key as keyof HerdSnapshotCardProps]}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{item.label}</p>
+          <div key={item.key} className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`p-1.5 rounded-md ${item.bg}`}>
+                <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{item.label}</span>
             </div>
+            <span className="text-sm font-bold text-slate-900 dark:text-white">{props[item.key]}</span>
           </div>
         ))}
       </div>
