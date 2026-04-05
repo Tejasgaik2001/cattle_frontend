@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Save, Calendar as CalendarIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { cowsApi } from '@/lib/api/cows';
 import { milkRecordsApi } from '@/lib/api/milk-records';
 
@@ -77,18 +78,18 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
       });
 
       if (recordsToSave.length === 0) {
-        alert('Please enter at least one milk record.');
+        toast.error('Please enter at least one milk record.');
         return;
       }
 
       await milkRecordsApi.createBulkMilkRecords({ records: recordsToSave });
-      alert('Milk records saved successfully!');
+      toast.success('Milk records saved successfully!');
       onSuccess?.();
       
       // Optionally clear entries if needed, or keep for review
     } catch (error: any) {
       console.error('Failed to save milk records:', error);
-      alert(error.response?.data?.message || 'Failed to save records. Please check for duplicates or errors.');
+      toast.error(error.response?.data?.message || 'Failed to save records. Please check for duplicates or errors.');
     } finally {
       setIsSaving(false);
     }

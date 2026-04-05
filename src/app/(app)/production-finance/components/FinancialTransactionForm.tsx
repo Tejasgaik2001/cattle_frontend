@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -44,7 +45,7 @@ export function FinancialTransactionForm({ onSuccess }: { onSuccess?: () => void
 
   const handleSubmit = async () => {
     if (!category || !amount || !date) {
-      alert('Please fill in all required fields (Category, Amount, Date).');
+      toast.error('Please fill in all required fields (Category, Amount, Date).');
       return;
     }
 
@@ -60,7 +61,7 @@ export function FinancialTransactionForm({ onSuccess }: { onSuccess?: () => void
         cowId: cowId === 'none' ? undefined : cowId,
       });
 
-      alert('Transaction logged successfully!');
+      toast.success('Transaction logged successfully!');
       onSuccess?.();
       // Reset form
       setAmount('');
@@ -68,7 +69,7 @@ export function FinancialTransactionForm({ onSuccess }: { onSuccess?: () => void
       setCowId(undefined);
     } catch (error: any) {
       console.error('Failed to save transaction:', error);
-      alert(error.response?.data?.message || 'Failed to save transaction. Please check your inputs.');
+      toast.error(error.response?.data?.message || 'Failed to save transaction. Please check your inputs.');
     } finally {
       setIsSaving(false);
     }

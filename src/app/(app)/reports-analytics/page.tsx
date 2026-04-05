@@ -6,6 +6,7 @@ import { MilkProductionReport } from './components/MilkProductionReport';
 import { FinancialPerformanceReport } from './components/FinancialPerformanceReport';
 import { reportsApi } from '@/lib/api/reports';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import type {
     ReportPeriod,
     MilkProductionTrendData,
@@ -67,7 +68,7 @@ export default function ReportsAnalyticsPage() {
     const handleExportData = (reportType: string, format: 'CSV' | 'PDF') => {
         console.log(`Exporting ${reportType} as ${format}`);
         // TODO: Implement export functionality
-        alert(`Export feature coming soon! (${reportType} as ${format})`);
+        toast(`Export feature coming soon! (${reportType} as ${format})`);
     };
 
     if (isLoading) {
