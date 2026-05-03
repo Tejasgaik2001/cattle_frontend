@@ -2,6 +2,7 @@ import type { ProductionFinanceProps } from '../types';
 import { ProductionFinanceOverviewCard } from './ProductionFinanceOverviewCard';
 import { OperationalInsights } from './OperationalInsights';
 import { MilkEntryTable } from './MilkEntryTable';
+import { MilkHistory } from './MilkHistory';
 import { FinancialTransactionForm } from './FinancialTransactionForm';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Droplets } from 'lucide-react';
@@ -18,7 +19,7 @@ export function ProductionFinance({
   onSuccess,
 }: ProductionFinanceProps) {
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Production & Finance</h2>
         <div className="flex space-x-2">
@@ -32,15 +33,22 @@ export function ProductionFinance({
           </Button>
         </div>
       </div>
+      
       <ProductionFinanceOverviewCard overview={overview} onPeriodChange={onPeriodChange} />
+      
       <OperationalInsights
         topProducingCows={topProducingCows}
         lowProducingCows={lowProducingCows}
         highestExpenseCategories={highestExpenseCategories}
         onViewCowDetails={onViewCowDetails}
       />
+      
       <MilkEntryTable onSuccess={onSuccess} />
+      
+      <MilkHistory />
+      
       <FinancialTransactionForm onSuccess={onSuccess} />
     </div>
   );
 }
+

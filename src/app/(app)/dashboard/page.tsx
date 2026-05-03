@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardAlerts } from './components/DashboardAlerts';
+import { FinancialsWidget } from './components/FinancialsWidget';
 import { dashboardApi } from '@/lib/api/dashboard';
 import { api } from '@/lib/api';
 import type { DashboardSummary, Alert, WeeklyMilkPoint, ActivityItem } from './types';
@@ -73,7 +74,7 @@ export default function DashboardPage() {
     };
 
     const handleRecordExpense = () => {
-        router.push('/production-finance');
+        router.push('/financials');
     };
 
     if (isLoading) {
@@ -103,19 +104,28 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Dashboard</h1>
+                <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Dashboard</h1>
             </div>
-            <DashboardAlerts
-                summary={summary}
-                alerts={alerts}
-                weeklyTrend={weeklyTrend}
-                recentActivity={recentActivity}
-                onViewAlertAction={handleViewAlertAction}
-                onRecordMilk={handleRecordMilk}
-                onLogHealthEvent={handleLogHealthEvent}
-                onAddCow={handleAddCow}
-                onRecordExpense={handleRecordExpense}
-            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <DashboardAlerts
+                        summary={summary}
+                        alerts={alerts}
+                        weeklyTrend={weeklyTrend}
+                        recentActivity={recentActivity}
+                        onViewAlertAction={handleViewAlertAction}
+                        onRecordMilk={handleRecordMilk}
+                        onLogHealthEvent={handleLogHealthEvent}
+                        onAddCow={handleAddCow}
+                        onRecordExpense={handleRecordExpense}
+                    />
+                </div>
+                <div className="space-y-6">
+                    <FinancialsWidget />
+                </div>
+            </div>
         </div>
     );
 }
+

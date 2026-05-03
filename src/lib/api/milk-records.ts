@@ -2,14 +2,28 @@ import { api } from '../api';
 import { getFarmId } from '../farm';
 
 export interface CreateMilkRecordDto {
-    cowId: string;
+    cowId?: string;
     date: string; // YYYY-MM-DD
     milkingTime: 'AM' | 'PM';
     amount: number;
+    isBulk?: boolean;
+    notes?: string;
+    pricePerLiter?: number;
 }
+
 
 export interface BulkMilkRecordDto {
     records: CreateMilkRecordDto[];
+}
+
+
+export interface UpdateMilkRecordDto {
+    amount?: number;
+    pricePerLiter?: number;
+    dairyAmount?: number;
+    dairyPricePerLiter?: number;
+    isReconciled?: boolean;
+    notes?: string;
 }
 
 export const milkRecordsApi = {
@@ -30,6 +44,14 @@ export const milkRecordsApi = {
     },
 
     /**
+     * Update a milk record (for reconciliation)
+     */
+    async updateMilkRecord(id: string, data: UpdateMilkRecordDto) {
+        const response = await api.patch(`/milk-records/${id}`, data);
+        return response.data;
+    },
+
+    /**
      * Get today's milk production stats
      */
     async getTodayStats() {
@@ -40,8 +62,9 @@ export const milkRecordsApi = {
     /**
      * Get milk records with optional filters
      */
-    async getMilkRecords(params?: { cowId?: string; startDate?: string; endDate?: string }) {
+    async getMilkRecords(params?: { cowId?: string; startDate?: string; endDate?: string; isBulk?: boolean }) {
         const response = await api.get(`/milk-records`, { params });
         return response.data;
     },
 };
+

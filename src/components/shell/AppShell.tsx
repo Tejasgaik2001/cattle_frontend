@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MainNav } from './MainNav';
 import { UserMenu } from './UserMenu';
 import { ThemeToggle } from '../theme/theme-toggle';
-import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart } from 'lucide-react';
+import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart, Wallet } from 'lucide-react';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -23,12 +23,14 @@ export function AppShell({ children, user, onLogout }: AppShellProps) {
     };
 
     const navigationItems = [
-        { label: 'Dashboard & Alerts', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'Herd Management', href: '/herd-management', icon: UsersRound },
-        { label: 'Health & Breeding', href: '/health-breeding', icon: HeartPulse },
-        { label: 'Production & Finance', href: '/production-finance', icon: Landmark },
-        { label: 'Reports & Analytics', href: '/reports-analytics', icon: BarChart },
+        { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { label: 'Herd', href: '/herd-management', icon: UsersRound },
+        { label: 'Financials', href: '/financials', icon: Wallet },
+        { label: 'Health', href: '/health-breeding', icon: HeartPulse },
+        { label: 'Production', href: '/production-finance', icon: Landmark },
+        { label: 'Reports', href: '/reports-analytics', icon: BarChart },
     ];
+
 
     // Augment navigation items with isActive based on current path
     const fullNavigationItems = navigationItems.map(item => ({
