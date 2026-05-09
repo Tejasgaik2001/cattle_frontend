@@ -26,6 +26,7 @@ export interface BreedingMetadata {
     sire: string;
     method: 'AI' | 'Natural';
     expectedCalvingDate?: string; // YYYY-MM-DD
+    result?: 'pending' | 'confirmed' | 'failed';
 }
 
 export interface HealthMetadata {

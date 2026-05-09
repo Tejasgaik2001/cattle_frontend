@@ -11,7 +11,9 @@ import {
     Loader2,
     Calendar,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Settings,
+    Scale
 } from 'lucide-react';
 import { financialApi } from '@/lib/api/financial';
 import { loansApi } from '@/lib/api/loans';
@@ -32,6 +34,8 @@ import { MonthlySummaryCard } from './components/MonthlySummaryCard';
 import { PeopleManager } from './components/PeopleManager';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { AddLoanModal } from './components/AddLoanModal';
+import { ReimbursementsTab } from './components/ReimbursementsTab';
+import { FinancialCategoriesTab } from './components/FinancialCategoriesTab';
 
 export default function FinancialsPage() {
     const [activeTab, setActiveTab] = useState<FinancialsTab>('summary');
@@ -93,7 +97,8 @@ export default function FinancialsPage() {
         { id: 'summary', label: 'Summary', icon: PieChartIcon },
         { id: 'transactions', label: 'Transactions', icon: History },
         { id: 'loans', label: 'Loans', icon: Building2 },
-        { id: 'people', label: 'People', icon: Users },
+        { id: 'reimbursements', label: 'Member Dues', icon: Users },
+        { id: 'categories', label: 'Settings', icon: Settings },
     ];
 
     return (
@@ -150,25 +155,35 @@ export default function FinancialsPage() {
                         </div>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Debt</p>
+                {/* Business Cash Balance (Estimated) */}
+                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-sm">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Business Cash</p>
                     <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400">
-                            ₹{loans.filter(l => l.status === 'active').reduce((sum, l) => sum + l.outstandingBalance, 0).toLocaleString()}
+                        <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                            ₹{Number((summary?.netBalance || 0) + 
+                                (summary?.spendingByPerson || []).reduce((sum, p) => sum + (Number(p.businessOwes) || 0) - (Number(p.owesBusiness) || 0), 0)
+                            ).toLocaleString()}
                         </h3>
-                        <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl">
-                            <Building2 className="h-5 w-5 text-amber-600" />
+                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+                            <Scale className="h-5 w-5 text-emerald-600" />
                         </div>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Reimbursements</p>
+
+                {/* Member Dues Quick Stat */}
+                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-sm">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Member Dues</p>
                     <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                            ₹{summary?.spendingByPerson.filter(p => p.pendingReimbursement).reduce((sum, p) => sum + p.amount, 0).toLocaleString() || 0}
-                        </h3>
-                        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
-                            <Users className="h-5 w-5 text-blue-600" />
+                        <div className="flex flex-col">
+                            <h3 className="text-lg font-black text-amber-600 dark:text-amber-500">
+                                Owes: ₹{(summary?.spendingByPerson || []).reduce((sum, p) => sum + (Number(p.businessOwes) || 0), 0).toLocaleString()}
+                            </h3>
+                            <h3 className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                Due: ₹{(summary?.spendingByPerson || []).reduce((sum, p) => sum + (Number(p.owesBusiness) || 0), 0).toLocaleString()}
+                            </h3>
+                        </div>
+                        <div className="p-2 bg-slate-50 dark:bg-slate-900/30 rounded-xl">
+                            <Users className="h-5 w-5 text-slate-600" />
                         </div>
                     </div>
                 </div>
@@ -209,7 +224,7 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'transactions' && (
-                        <div className="bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 rounded-[2rem] p-6">
+                        <div className="bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 rounded-[2rem] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <History className="h-5 w-5 text-emerald-600" />
@@ -225,13 +240,7 @@ export default function FinancialsPage() {
                             {loans.length === 0 ? (
                                 <div className="col-span-full py-20 text-center bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 rounded-[2rem]">
                                     <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">No Loans Yet</h3>
-                                    <p className="text-slate-500 max-w-xs mx-auto mt-1">Track money you owe to banks or individuals to stay on top of interest.</p>
-                                    <button 
-                                        onClick={() => setShowLoanModal(true)}
-                                        className="mt-6 px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all">
-                                        Add First Loan
-                                    </button>
+                                    <p className="text-slate-500">No active loans found.</p>
                                 </div>
                             ) : (
                                 loans.map(loan => (
@@ -241,8 +250,16 @@ export default function FinancialsPage() {
                         </div>
                     )}
 
+                    {activeTab === 'reimbursements' && (
+                        <ReimbursementsTab farmId="" />
+                    )}
+
+                    {activeTab === 'categories' && (
+                        <FinancialCategoriesTab />
+                    )}
+
                     {activeTab === 'people' && (
-                        <PeopleManager people={people} onUpdate={fetchData} />
+                        <PeopleManager farmId="" />
                     )}
                 </div>
             )}
@@ -254,7 +271,7 @@ export default function FinancialsPage() {
                 onSuccess={fetchData} 
             />
             <AddLoanModal 
-                open={showLoanModal} 
+                isOpen={showLoanModal} 
                 onClose={() => setShowLoanModal(false)} 
                 onSuccess={fetchData} 
             />

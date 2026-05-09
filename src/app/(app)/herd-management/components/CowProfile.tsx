@@ -11,6 +11,9 @@ import {
     Droplets, Stethoscope, Baby, PiggyBank, Tag, UsersRound
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useState } from 'react';
 
 interface CowProfileProps {
     cow: Cow;
@@ -65,8 +68,23 @@ export function CowProfile({
     onBackToHerdList,
     isLoading = false,
 }: CowProfileProps) {
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState<'active' | 'sold' | 'deceased' | null>(null);
+
     // Sort events by date descending for chronological timeline
     const sortedEvents = [...cowEvents].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const handleStatusChangeClick = (status: 'active' | 'sold' | 'deceased') => {
+        setPendingStatus(status);
+        setConfirmOpen(true);
+    };
+
+    const handleConfirmStatusChange = () => {
+        if (pendingStatus) {
+            onMarkCowLifecycleStatus(cow.id, pendingStatus);
+            setPendingStatus(null);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -104,7 +122,7 @@ export function CowProfile({
                             <Edit className="h-4 w-4 mr-2" /> Edit Profile
                         </Button>
                         {cow.lifecycleStatus === 'active' && (
-                            <Button variant="destructive" onClick={() => onMarkCowLifecycleStatus(cow.id, 'sold')}>
+                            <Button variant="destructive" onClick={() => handleStatusChangeClick('sold')}>
                                 Mark as Sold
                             </Button>
                         )}
@@ -123,27 +141,36 @@ export function CowProfile({
             </Card>
 
             {/* Quick Stats */}
-            <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Quick Stats</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="flex items-center text-slate-700 dark:text-slate-300">
-                        <UsersRound className="h-5 w-5 mr-2 text-emerald-500" />
-                        <span>Lactating: {cow.gender === 'female' ? 'Yes' : 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center text-slate-700 dark:text-slate-300">
-                        <Baby className="h-5 w-5 mr-2 text-emerald-500" />
-                        <span>Pregnant: Unknown</span>
-                    </div>
-                    {latestMilkRecord && (
-                        <div className="flex items-center text-slate-700 dark:text-slate-300">
-                            <Milk className="h-5 w-5 mr-2 text-emerald-500" />
-                            <span>Last Milk: {latestMilkRecord.amount} L ({formatDate(latestMilkRecord.date)})</span>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            {(() => {
+                const latestBreeding = sortedEvents.find(e => e.type === 'BREEDING');
+                const isPregnant = latestBreeding?.metadata && (latestBreeding.metadata as any).result === 'confirmed';
+                
+                return (
+                    <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Quick Stats</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="flex items-center text-slate-700 dark:text-slate-300">
+                                <UsersRound className="h-5 w-5 mr-2 text-emerald-500" />
+                                <span>Lactating: {cow.gender === 'female' ? 'Yes' : 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center text-slate-700 dark:text-slate-300">
+                                <Baby className={cn("h-5 w-5 mr-2", isPregnant ? "text-pink-500" : "text-slate-400")} />
+                                <span className={cn(isPregnant && "font-bold text-pink-600 dark:text-pink-400")}>
+                                    Pregnant: {isPregnant ? 'Confirmed' : 'No'}
+                                </span>
+                            </div>
+                            {latestMilkRecord && (
+                                <div className="flex items-center text-slate-700 dark:text-slate-300">
+                                    <Milk className="h-5 w-5 mr-2 text-emerald-500" />
+                                    <span>Last Milk: {latestMilkRecord.amount} L ({formatDate(latestMilkRecord.date)})</span>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                );
+            })()}
 
             {/* Quick Actions */}
             <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
@@ -205,6 +232,16 @@ export function CowProfile({
                     )}
                 </CardContent>
             </Card>
+
+            <ConfirmationDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title={pendingStatus === 'sold' ? 'Mark Cow as Sold?' : 'Change Cow Status?'}
+                description={`Are you sure you want to change ${cow.name || cow.tagId}'s status to ${pendingStatus}? This will affect production and financial records.`}
+                confirmText={`Yes, Mark as ${pendingStatus}`}
+                onConfirm={handleConfirmStatusChange}
+                variant={pendingStatus === 'deceased' || pendingStatus === 'sold' ? 'destructive' : 'default'}
+            />
         </div>
     );
 }

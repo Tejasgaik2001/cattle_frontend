@@ -55,6 +55,8 @@ export interface ExpenseCategoryMetric {
 // =============================================================================
 
 export interface ProductionFinanceProps {
+  /** A key that changes whenever the dashboard data should be refreshed. */
+  refreshKey?: number;
   /** The aggregated overview data for the Production & Finance section. */
   overview: ProductionFinanceOverview;
   /** The list of cows ranked by top milk production. */
@@ -66,8 +68,6 @@ export interface ProductionFinanceProps {
   
   /** Called when the user wants to initiate a bulk milk record entry. */
   onRecordMilkBulk?: () => void;
-  /** Called when the user wants to log a new financial transaction. */
-  onLogFinancialTransaction?: () => void;
   /** Called when a cow in an insight list is clicked to view its profile. */
   onViewCowDetails?: (cowId: string) => void;
   /** Called when the user wants to change the reporting period for the overview. */

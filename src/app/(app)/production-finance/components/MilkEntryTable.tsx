@@ -28,6 +28,8 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
   const [bulkAm, setBulkAm] = useState('');
   const [bulkPm, setBulkPm] = useState('');
   const [pricePerLiter, setPricePerLiter] = useState('45'); // Default price
+  const [fat, setFat] = useState('');
+  const [snf, setSnf] = useState('');
   const [bulkSelectionMode, setBulkSelectionMode] = useState<'all' | 'selected'>('all');
   const [selectedCowIds, setSelectedCowIds] = useState<Set<string>>(new Set());
 
@@ -147,6 +149,8 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
             isBulk: true,
             notes,
             pricePerLiter: price,
+            fat: parseFloat(fat) || null,
+            snf: parseFloat(snf) || null,
           });
         }
         
@@ -158,6 +162,8 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
             isBulk: true,
             notes,
             pricePerLiter: price,
+            fat: parseFloat(fat) || null,
+            snf: parseFloat(snf) || null,
           });
         }
 
@@ -180,6 +186,8 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
               milkingTime: 'AM',
               amount: parseFloat(values.am),
               pricePerLiter: price,
+              fat: parseFloat(fat) || null,
+              snf: parseFloat(snf) || null,
             });
           }
           if (values.pm && parseFloat(values.pm) > 0) {
@@ -189,6 +197,8 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
               milkingTime: 'PM',
               amount: parseFloat(values.pm),
               pricePerLiter: price,
+              fat: parseFloat(fat) || null,
+              snf: parseFloat(snf) || null,
             });
           }
         });
@@ -241,6 +251,30 @@ export function MilkEntryTable({ onSuccess }: { onSuccess?: () => void }) {
         
         <div className="flex flex-wrap items-center gap-3">
           {/* Price per Liter Input */}
+          {/* Fat/SNF Inputs */}
+          <div className="flex items-center bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-900/30">
+            <div className="flex items-center border-r border-blue-100 dark:border-blue-800 pr-2 mr-2">
+              <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mr-2 tracking-tighter">FAT</span>
+              <Input 
+                type="number" 
+                step="0.1"
+                value={fat} 
+                onChange={(e) => setFat(e.target.value)}
+                className="bg-transparent border-none text-sm font-bold w-10 h-auto p-0 focus-visible:ring-0 text-blue-700 dark:text-blue-300"
+              />
+            </div>
+            <div className="flex items-center">
+              <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mr-2 tracking-tighter">SNF</span>
+              <Input 
+                type="number" 
+                step="0.1"
+                value={snf} 
+                onChange={(e) => setSnf(e.target.value)}
+                className="bg-transparent border-none text-sm font-bold w-10 h-auto p-0 focus-visible:ring-0 text-blue-700 dark:text-blue-300"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center bg-amber-50 dark:bg-amber-900/10 px-3 py-1.5 rounded-xl border border-amber-100 dark:border-amber-900/30">
             <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase mr-2 tracking-tighter">Price / L</span>
             <Input 

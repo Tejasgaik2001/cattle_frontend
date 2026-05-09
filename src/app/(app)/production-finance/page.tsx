@@ -13,6 +13,7 @@ export default function ProductionFinancePage() {
     const [insights, setInsights] = useState<OperationalInsights | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const fetchData = async () => {
         try {
@@ -38,6 +39,7 @@ export default function ProductionFinancePage() {
 
             setOverview(overviewData);
             setInsights(insightsData);
+            setRefreshKey(prev => prev + 1);
         } catch (err: any) {
             console.error('Failed to fetch production & finance data:', err);
             setError('Failed to load production and finance data. Please try again later.');
@@ -58,13 +60,7 @@ export default function ProductionFinancePage() {
         }
     };
 
-    const handleLogFinancialTransaction = () => {
-        // This could show a dialog or scroll to the form
-        const element = document.getElementById('financial-transaction-form');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+
 
     const handleViewCowDetails = (cowId: string) => {
         router.push(`/herd-management/${cowId}`);
@@ -106,10 +102,10 @@ export default function ProductionFinancePage() {
             lowProducingCows={insights.lowProducingCows}
             highestExpenseCategories={insights.highestExpenseCategories}
             onRecordMilkBulk={handleRecordMilkBulk}
-            onLogFinancialTransaction={handleLogFinancialTransaction}
             onViewCowDetails={handleViewCowDetails}
             onPeriodChange={handlePeriodChange}
             onSuccess={fetchData}
+            refreshKey={refreshKey}
         />
     );
 }

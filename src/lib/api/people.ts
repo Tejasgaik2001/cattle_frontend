@@ -1,13 +1,5 @@
 import { api } from '../api';
-
-export interface Person {
-    id: string;
-    name: string;
-    role: 'owner' | 'family' | 'worker';
-    notes?: string;
-    farmId: string;
-    createdAt: string;
-}
+import type { Person } from '@/app/(app)/financials/types';
 
 export interface CreatePersonDto {
     name: string;

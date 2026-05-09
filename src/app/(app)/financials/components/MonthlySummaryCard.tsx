@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import type { MonthlySummary } from '../types';
-import { TrendingUp, TrendingDown, Scale, AlertTriangle, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Scale, AlertTriangle, Users, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 interface MonthlySummaryCardProps {
     summary: MonthlySummary;
@@ -13,17 +13,13 @@ interface MonthlySummaryCardProps {
 }
 
 function formatCurrency(n: number) {
-    return `₹${Math.abs(n).toLocaleString('en-IN')}`;
+    const val = isNaN(n) ? 0 : n;
+    return `₹${Math.abs(val).toLocaleString('en-IN')}`;
 }
 
 const PIE_COLORS = [
     '#f97316', '#ef4444', '#8b5cf6', '#3b82f6',
     '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#10b981',
-];
-
-const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
 export function MonthlySummaryCard({ summary, onMonthChange, year, month }: MonthlySummaryCardProps) {
@@ -82,10 +78,10 @@ export function MonthlySummaryCard({ summary, onMonthChange, year, month }: Mont
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Expense Pie */}
-                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">Expense by Category</h3>
+                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-4">Expense Breakdown</h3>
                     {summary.expenseByCategory.length === 0 ? (
-                        <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">No expenses this month</div>
+                        <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm italic">No expenses this month</div>
                     ) : (
                         <>
                             <ResponsiveContainer width="100%" height={200}>
@@ -104,7 +100,7 @@ export function MonthlySummaryCard({ summary, onMonthChange, year, month }: Mont
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                                        formatter={(value: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, 'Amount']}
                                         contentStyle={{ background: 'var(--tw-color-slate-800, #1e293b)', border: 'none', borderRadius: '12px', padding: '8px 12px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -127,10 +123,10 @@ export function MonthlySummaryCard({ summary, onMonthChange, year, month }: Mont
                 </div>
 
                 {/* Income breakdown */}
-                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
                     <h3 className="font-bold text-slate-900 dark:text-white mb-4">Income Sources</h3>
                     {summary.incomeByCategory.length === 0 ? (
-                        <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">No income this month</div>
+                        <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm italic">No income this month</div>
                     ) : (
                         <div className="space-y-3 mt-4">
                             {summary.incomeByCategory.map((ic, i) => (
@@ -152,36 +148,62 @@ export function MonthlySummaryCard({ summary, onMonthChange, year, month }: Mont
                 </div>
             </div>
 
-            {/* Spending by person / Reimbursements */}
+            {/* Member Dues Section */}
             {summary.spendingByPerson.length > 0 && (
-                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                        <h3 className="font-bold text-slate-900 dark:text-white">Spending by Person</h3>
+                <div className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-6">
+                        <Users className="h-5 w-5 text-violet-600" />
+                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Family & Worker Dues</h3>
                     </div>
-                    <div className="space-y-3">
-                        {summary.spendingByPerson.map((sp) => (
-                            <div key={sp.personId} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-900/40">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-sm font-bold">
-                                        {sp.name[0]?.toUpperCase()}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Business Owes Members */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <ArrowUpRight className="h-3.5 w-3.5 text-amber-500" />
+                                Business Owes Them
+                            </h4>
+                            <div className="space-y-2">
+                                {summary.spendingByPerson.filter(p => p.businessOwes > 0).map((sp) => (
+                                    <div key={sp.personId} className="flex items-center justify-between p-3 rounded-2xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">
+                                                {sp.name[0]}
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{sp.name}</span>
+                                        </div>
+                                        <span className="font-bold text-amber-700 dark:text-amber-500">{formatCurrency(sp.businessOwes)}</span>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{sp.name}</p>
-                                        <p className="text-xs text-slate-400 capitalize">{sp.role}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrency(sp.amount)}</span>
-                                    {sp.pendingReimbursement && (
-                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-semibold">
-                                            <AlertTriangle className="h-3 w-3" />
-                                            Reimburse
-                                        </span>
-                                    )}
-                                </div>
+                                ))}
+                                {summary.spendingByPerson.filter(p => p.businessOwes > 0).length === 0 && (
+                                    <p className="text-xs text-slate-400 italic">No pending reimbursements</p>
+                                )}
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Members Owe Business */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <ArrowDownLeft className="h-3.5 w-3.5 text-blue-500" />
+                                They Owe Business
+                            </h4>
+                            <div className="space-y-2">
+                                {summary.spendingByPerson.filter(p => p.owesBusiness > 0).map((sp) => (
+                                    <div key={sp.personId} className="flex items-center justify-between p-3 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-900/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                                                {sp.name[0]}
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{sp.name}</span>
+                                        </div>
+                                        <span className="font-bold text-blue-700 dark:text-blue-500">{formatCurrency(sp.owesBusiness)}</span>
+                                    </div>
+                                ))}
+                                {summary.spendingByPerson.filter(p => p.owesBusiness > 0).length === 0 && (
+                                    <p className="text-xs text-slate-400 italic">No pending collections</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

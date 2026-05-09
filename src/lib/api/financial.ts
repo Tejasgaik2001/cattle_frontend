@@ -1,4 +1,10 @@
 import { api } from '../api';
+import type { 
+    FinancialTransaction as FinancialTransactionRecord, 
+    MonthlySummary, 
+    CategoryBreakdown,
+    SpendingByPerson
+} from '@/app/(app)/financials/types';
 
 export interface CreateFinancialTransactionDto {
     type: 'income' | 'expense';
@@ -17,44 +23,6 @@ export interface UpdateFinancialTransactionDto {
     date?: string;
     description?: string;
     paidById?: string;
-}
-
-export interface CategoryBreakdown {
-    category: string;
-    amount: number;
-    percentage: number;
-}
-
-export interface SpendingByPerson {
-    personId: string;
-    name: string;
-    role: string;
-    amount: number;
-    pendingReimbursement: boolean;
-}
-
-export interface MonthlySummary {
-    period: string;
-    totalIncome: number;
-    totalExpenses: number;
-    netBalance: number;
-    expenseByCategory: CategoryBreakdown[];
-    incomeByCategory: CategoryBreakdown[];
-    recentTransactions: FinancialTransactionRecord[];
-    spendingByPerson: SpendingByPerson[];
-}
-
-export interface FinancialTransactionRecord {
-    id: string;
-    type: 'income' | 'expense';
-    category: string;
-    amount: number;
-    date: string;
-    description?: string;
-    paidById?: string;
-    paidBy?: { id: string; name: string; role: string };
-    cowId?: string;
-    createdAt: string;
 }
 
 export const financialApi = {

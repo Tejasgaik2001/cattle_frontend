@@ -7,6 +7,9 @@ export type PersonRole = 'owner' | 'family' | 'worker';
 export type LoanType = 'simple' | 'compound';
 export type LoanStatus = 'active' | 'closed';
 
+export type MemberDueType = 'OWES_BUSINESS' | 'BUSINESS_OWES';
+export type MemberDueStatus = 'PENDING' | 'SETTLED';
+
 export const EXPENSE_CATEGORIES = [
     'Feed',
     'Medical',
@@ -29,6 +32,13 @@ export const INCOME_CATEGORIES = [
 
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
 export type IncomeCategory = typeof INCOME_CATEGORIES[number];
+
+export interface FinancialCategory {
+    id: string;
+    name: string;
+    type: 'income' | 'expense';
+    isSystem: boolean;
+}
 
 export interface FinancialTransaction {
     id: string;
@@ -63,6 +73,21 @@ export interface LoanPayment {
     createdAt: string;
 }
 
+export interface MemberDue {
+    id: string;
+    personId: string;
+    type: MemberDueType;
+    linkedTransactionId?: string;
+    amount: number;
+    status: MemberDueStatus;
+    settledAt?: string;
+    note?: string;
+    person: Person;
+    linkedTransaction?: FinancialTransaction;
+    createdAt: string;
+}
+
+
 export interface Loan {
     id: string;
     farmId: string;
@@ -90,8 +115,9 @@ export interface SpendingByPerson {
     personId: string;
     name: string;
     role: PersonRole;
-    amount: number;
-    pendingReimbursement: boolean;
+    businessOwes: number;
+    owesBusiness: number;
+    items: MemberDue[];
 }
 
 export interface MonthlySummary {
@@ -106,4 +132,4 @@ export interface MonthlySummary {
 }
 
 // Tab type for navigation
-export type FinancialsTab = 'transactions' | 'loans' | 'summary' | 'people';
+export type FinancialsTab = 'transactions' | 'loans' | 'summary' | 'people' | 'reimbursements' | 'categories';

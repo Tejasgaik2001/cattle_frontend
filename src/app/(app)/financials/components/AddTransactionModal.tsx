@@ -7,7 +7,8 @@ import { financialApi } from '@/lib/api/financial';
 import { peopleApi } from '@/lib/api/people';
 import { cowsApi } from '@/lib/api/cows';
 import { getFarmId } from '@/lib/farm';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type Person } from '../types';
+import { type Person, type FinancialCategory } from '../types';
+import { financialCategoriesApi } from '@/lib/api/financialCategories';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -18,9 +19,11 @@ interface AddTransactionModalProps {
 export function AddTransactionModal({ open, onClose, onSuccess }: AddTransactionModalProps) {
     const [type, setType] = useState<'income' | 'expense'>('expense');
     const [category, setCategory] = useState('');
+    const [categories, setCategories] = useState<FinancialCategory[]>([]);
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
+    const [isPaidPersonally, setIsPaidPersonally] = useState(false);
     const [paidById, setPaidById] = useState('');
     const [cowId, setCowId] = useState('');
     const [people, setPeople] = useState<Person[]>([]);
@@ -29,10 +32,11 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
 
     useEffect(() => {
         if (!open) return;
-        Promise.all([peopleApi.getAll(), cowsApi.getActiveFemales()])
-            .then(([p, c]) => {
+        Promise.all([peopleApi.getAll(), cowsApi.getActiveFemales(), financialCategoriesApi.getAll()])
+            .then(([p, c, cats]) => {
                 setPeople(p);
                 setCows(c);
+                setCategories(cats);
             })
             .catch(() => {});
     }, [open]);
@@ -53,16 +57,16 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                 amount: parseFloat(amount),
                 date,
                 description: description || undefined,
-                paidById: paidById || undefined,
+                paidById: (type === 'expense' && isPaidPersonally && paidById) ? paidById : undefined,
                 cowId: cowId || undefined,
             });
             toast.success('Transaction saved!');
             onSuccess();
             onClose();
-            // reset
             setCategory('');
             setAmount('');
             setDescription('');
+            setIsPaidPersonally(false);
             setPaidById('');
             setCowId('');
         } catch (err: any) {
@@ -71,8 +75,6 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
             setIsSaving(false);
         }
     };
-
-    const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
     if (!open) return null;
 
@@ -117,7 +119,9 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm">
                             <option value="">Select category...</option>
-                            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                            {categories.filter(c => c.type === type).map((c) => (
+                                <option key={c.id} value={c.name}>{c.name}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -142,22 +146,63 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                         </div>
                     </div>
 
-                    {/* Paid By */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                            Paid By <span className="text-slate-400 font-normal">(for reimbursement tracking)</span>
+                    {/* Payment/Receipt Source */}
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {type === 'expense' ? 'Payment Source *' : 'Received In *'}
                         </label>
-                        <select
-                            value={paidById}
-                            onChange={(e) => setPaidById(e.target.value)}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm">
-                            <option value="">Not specified</option>
-                            {people.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                    {p.name} ({p.role})
-                                </option>
-                            ))}
-                        </select>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsPaidPersonally(false);
+                                    setPaidById('');
+                                }}
+                                className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all flex items-center justify-center gap-2 ${
+                                    !isPaidPersonally
+                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-400'
+                                        : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
+                                }`}
+                            >
+                                🏦 Business Wallet
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsPaidPersonally(true)}
+                                className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all flex items-center justify-center gap-2 ${
+                                    isPaidPersonally
+                                        ? 'bg-amber-50 border-amber-500 text-amber-700 dark:bg-amber-900/30 dark:border-amber-500 dark:text-amber-400'
+                                        : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
+                                }`}
+                            >
+                                👨‍👩‍👦 Personal {type === 'expense' ? 'Pocket' : 'Account'}
+                            </button>
+                        </div>
+
+                        {isPaidPersonally && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">
+                                    {type === 'expense' ? 'Who paid for this?' : 'Who received this money?'}
+                                </label>
+                                <select
+                                    required={isPaidPersonally}
+                                    value={paidById}
+                                    onChange={(e) => setPaidById(e.target.value)}
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm">
+                                    <option value="">Select family/worker...</option>
+                                    {people.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name} ({p.role})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="mt-1.5 text-[10px] text-amber-600 dark:text-amber-500 font-medium">
+                                    {type === 'expense' 
+                                        ? '* This will create a pending reimbursement owed to this person.'
+                                        : '* This will mark that this member owes this money to the business.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Notes */}

@@ -46,6 +46,7 @@ export function AddEventDialog({ open, onOpenChange, cowId, onSuccess }: AddEven
     const [sire, setSire] = useState('');
     const [method, setMethod] = useState<'AI' | 'Natural'>('AI');
     const [expectedCalvingDate, setExpectedCalvingDate] = useState('');
+    const [breedingResult, setBreedingResult] = useState<'pending' | 'confirmed' | 'failed'>('pending');
 
     // Health metadata
     const [symptoms, setSymptoms] = useState('');
@@ -65,6 +66,7 @@ export function AddEventDialog({ open, onOpenChange, cowId, onSuccess }: AddEven
         setSire('');
         setMethod('AI');
         setExpectedCalvingDate('');
+        setBreedingResult('pending');
         setSymptoms('');
         setTreatment('');
         setDiagnosis('');
@@ -108,6 +110,7 @@ export function AddEventDialog({ open, onOpenChange, cowId, onSuccess }: AddEven
                     metadata = {
                         sire,
                         method,
+                        result: breedingResult,
                         ...(expectedCalvingDate && { expectedCalvingDate }),
                     } as BreedingMetadata;
                     break;
@@ -259,6 +262,19 @@ export function AddEventDialog({ open, onOpenChange, cowId, onSuccess }: AddEven
                                     value={expectedCalvingDate}
                                     onChange={(e) => setExpectedCalvingDate(e.target.value)}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="breedingResult">Breeding Result *</Label>
+                                <Select value={breedingResult} onValueChange={(value: 'pending' | 'confirmed' | 'failed') => setBreedingResult(value)}>
+                                    <SelectTrigger id="breedingResult">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="confirmed">Confirmed (Pregnant)</SelectItem>
+                                        <SelectItem value="failed">Failed</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </>
                     )}

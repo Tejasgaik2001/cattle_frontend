@@ -1,32 +1,5 @@
 import { api } from '../api';
-
-export interface LoanPayment {
-    id: string;
-    loanId: string;
-    paymentDate: string;
-    amountPaid: number;
-    interestComponent: number;
-    principalComponent: number;
-    notes?: string;
-    createdAt: string;
-}
-
-export interface Loan {
-    id: string;
-    farmId: string;
-    lenderName: string;
-    principalAmount: number;
-    interestRate: number;
-    startDate: string;
-    type: 'simple' | 'compound';
-    status: 'active' | 'closed';
-    notes?: string;
-    payments: LoanPayment[];
-    outstandingBalance: number;
-    totalPaid: number;
-    accruedInterest: number;
-    createdAt: string;
-}
+import type { Loan, LoanPayment } from '@/app/(app)/financials/types';
 
 export interface CreateLoanDto {
     lenderName: string;
