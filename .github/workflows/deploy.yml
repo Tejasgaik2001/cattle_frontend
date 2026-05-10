@@ -62,7 +62,7 @@ jobs:
 
             docker run -d \
               --name cattle-frontend \
-              -p 3001:3000 \
+              -p 3006:3000 \
               --restart unless-stopped \
               ghcr.io/${{ env.IMAGE_NAME }}:master
 
