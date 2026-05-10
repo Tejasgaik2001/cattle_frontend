@@ -59,7 +59,7 @@ export function WeeklyMilkTrendCard({ data }: WeeklyMilkTrendCardProps) {
                 fontSize: 12,
                 color: '#f1f5f9',
               }}
-              formatter={(value: number | undefined) => [`${(value ?? 0).toFixed(1)} L`, 'Milk']}
+              formatter={(value: any) => [`${(Number(value) || 0).toFixed(1)} L`, 'Milk']}
             />
             <Area
               type="monotone"
