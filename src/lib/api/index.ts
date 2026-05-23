@@ -9,4 +9,6 @@ export * from './dashboard';
 export * from './reports';
 export * from './people';
 export * from './loans';
+export * from './users';
+export * from './financialCategories';
 

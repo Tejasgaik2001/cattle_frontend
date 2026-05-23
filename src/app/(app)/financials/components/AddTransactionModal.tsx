@@ -6,6 +6,7 @@ import { X, PlusCircle, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import { financialApi } from '@/lib/api/financial';
 import { peopleApi } from '@/lib/api/people';
 import { cowsApi } from '@/lib/api/cows';
+import { usersApi, type User } from '@/lib/api/users';
 import { getFarmId } from '@/lib/farm';
 import { type Person, type FinancialCategory } from '../types';
 import { financialCategoriesApi } from '@/lib/api/financialCategories';
@@ -27,19 +28,25 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
     const [paidById, setPaidById] = useState('');
     const [cowId, setCowId] = useState('');
     const [people, setPeople] = useState<Person[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [cows, setCows] = useState<{ id: string; tagId: string; name: string | null }[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (!open) return;
-        Promise.all([peopleApi.getAll(), cowsApi.getActiveFemales(), financialCategoriesApi.getAll()])
-            .then(([p, c, cats]) => {
+        Promise.all([peopleApi.getAll(), usersApi.getAll(), cowsApi.getActiveFemales(), financialCategoriesApi.getAll()])
+            .then(([p, u, c, cats]) => {
                 setPeople(p);
+                setUsers(u);
                 setCows(c);
                 setCategories(cats);
+                console.log('Users loaded:', u);
             })
-            .catch(() => {});
+            .catch((err) => {
+                console.error('Error loading data:', err);
+            });
     }, [open]);
+    console.log("setusersUsers",users)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -189,10 +196,10 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                                     value={paidById}
                                     onChange={(e) => setPaidById(e.target.value)}
                                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm">
-                                    <option value="">Select family/worker...</option>
-                                    {people.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name} ({p.role})
+                                    <option value="">Select user...</option>
+                                    {users.filter(u => u.isActive).map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.name} ({u.globalRole.replace('_', ' ')})
                                         </option>
                                     ))}
                                 </select>
