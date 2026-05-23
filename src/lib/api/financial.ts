@@ -3,7 +3,8 @@ import type {
     FinancialTransaction as FinancialTransactionRecord, 
     MonthlySummary, 
     CategoryBreakdown,
-    SpendingByPerson
+    SpendingByPerson,
+    Person
 } from '@/app/(app)/financials/types';
 
 export interface CreateFinancialTransactionDto {
@@ -81,5 +82,10 @@ export const financialApi = {
 
     async deleteTransaction(farmId: string, transactionId: string) {
         await api.delete(`/financial/transactions/${transactionId}`);
+    },
+
+    async getPersons(): Promise<Person[]> {
+        const response = await api.get(`/people`);
+        return response.data;
     }
 };

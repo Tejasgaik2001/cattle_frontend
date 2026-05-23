@@ -8,7 +8,7 @@ export type LoanType = 'simple' | 'compound';
 export type LoanStatus = 'active' | 'closed';
 
 export type MemberDueType = 'OWES_BUSINESS' | 'BUSINESS_OWES';
-export type MemberDueStatus = 'PENDING' | 'SETTLED';
+export type MemberDueStatus = 'PENDING' | 'PARTIALLY_PAID' | 'SETTLED';
 
 export const EXPENSE_CATEGORIES = [
     'Feed',
@@ -79,6 +79,7 @@ export interface MemberDue {
     type: MemberDueType;
     linkedTransactionId?: string;
     amount: number;
+    paidAmount?: number;
     status: MemberDueStatus;
     settledAt?: string;
     note?: string;

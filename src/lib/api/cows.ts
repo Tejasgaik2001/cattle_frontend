@@ -105,4 +105,12 @@ export const cowsApi = {
         const response = await api.get(`/cows/active-females`);
         return response.data;
     },
+
+    /**
+     * Get family tree data for all cows
+     */
+    async getFamilyTree(): Promise<Cow[]> {
+        const response = await api.get(`/cows/family-tree`);
+        return response.data;
+    },
 };
