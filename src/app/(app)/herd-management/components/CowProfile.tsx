@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     ArrowLeft, Edit, PlusCircle, Milk, Calendar,
     Droplets, Stethoscope, Baby, PiggyBank, Tag, UsersRound
@@ -22,7 +25,7 @@ interface CowProfileProps {
     onEditCow: (cowId: string) => void;
     onAddCowEvent: (cowId: string) => void;
     onRecordMilkForCow: (cowId: string) => void;
-    onMarkCowLifecycleStatus: (cowId: string, status: 'active' | 'sold' | 'deceased') => void;
+    onMarkCowLifecycleStatus: (cowId: string, status: 'active' | 'sold' | 'deceased', saleInfo?: { soldTo: string; soldPrice: number; soldDate: string; soldDescription?: string }) => void;
     onBackToHerdList: () => void;
     isLoading?: boolean;
 }
@@ -70,13 +73,24 @@ export function CowProfile({
 }: CowProfileProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingStatus, setPendingStatus] = useState<'active' | 'sold' | 'deceased' | null>(null);
+    const [saleDialogOpen, setSaleDialogOpen] = useState(false);
+    const [saleInfo, setSaleInfo] = useState({
+        soldTo: '',
+        soldPrice: '',
+        soldDate: format(new Date(), 'yyyy-MM-dd'),
+        soldDescription: '',
+    });
 
     // Sort events by date descending for chronological timeline
     const sortedEvents = [...cowEvents].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const handleStatusChangeClick = (status: 'active' | 'sold' | 'deceased') => {
-        setPendingStatus(status);
-        setConfirmOpen(true);
+        if (status === 'sold') {
+            setSaleDialogOpen(true);
+        } else {
+            setPendingStatus(status);
+            setConfirmOpen(true);
+        }
     };
 
     const handleConfirmStatusChange = () => {
@@ -84,6 +98,25 @@ export function CowProfile({
             onMarkCowLifecycleStatus(cow.id, pendingStatus);
             setPendingStatus(null);
         }
+    };
+
+    const handleSaleSubmit = () => {
+        if (!saleInfo.soldTo || !saleInfo.soldPrice || !saleInfo.soldDate) {
+            return;
+        }
+        onMarkCowLifecycleStatus(cow.id, 'sold', {
+            soldTo: saleInfo.soldTo,
+            soldPrice: parseFloat(saleInfo.soldPrice),
+            soldDate: saleInfo.soldDate,
+            soldDescription: saleInfo.soldDescription,
+        });
+        setSaleDialogOpen(false);
+        setSaleInfo({
+            soldTo: '',
+            soldPrice: '',
+            soldDate: format(new Date(), 'yyyy-MM-dd'),
+            soldDescription: '',
+        });
     };
 
     if (isLoading) {
@@ -135,7 +168,24 @@ export function CowProfile({
                         <div><strong>Date of Birth:</strong> {formatDate(cow.dateOfBirth)}</div>
                         <div><strong>Acquisition Date:</strong> {formatDate(cow.acquisitionDate)}</div>
                         {cow.acquisitionSource && <div><strong>Source:</strong> {cow.acquisitionSource}</div>}
+                        {cow.acquisitionCost && <div><strong>Acquisition Cost:</strong> ₹{cow.acquisitionCost}</div>}
                         {cow.motherId && <div><strong>Mother ID:</strong> {cow.motherId}</div>}
+                        {cow.lifecycleStatus === 'sold' && (
+                            <>
+                                <div><strong>Sold To:</strong> {cow.soldTo}</div>
+                                <div><strong>Sold Price:</strong> ₹{cow.soldPrice}</div>
+                                <div><strong>Sold Date:</strong> {cow.soldDate ? formatDate(cow.soldDate) : 'N/A'}</div>
+                                {cow.acquisitionCost && (
+                                    <div className="col-span-2">
+                                        <strong>Profit/Loss:</strong> 
+                                        <span className={typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' && cow.soldPrice > cow.acquisitionCost ? 'text-emerald-600 font-bold ml-2' : typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' && cow.soldPrice < cow.acquisitionCost ? 'text-red-600 font-bold ml-2' : 'ml-2'}>
+                                            ₹{typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' ? (cow.soldPrice - cow.acquisitionCost).toFixed(2) : 'N/A'}
+                                        </span>
+                                    </div>
+                                )}
+                                {cow.soldDescription && <div className="col-span-2"><strong>Sale Description:</strong> {cow.soldDescription}</div>}
+                            </>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -145,10 +195,16 @@ export function CowProfile({
                 const latestBreeding = sortedEvents.find(e => e.type === 'BREEDING');
                 const isPregnant = latestBreeding?.metadata && (latestBreeding.metadata as any).result === 'confirmed';
                 
+                // Calculate duration on farm
+                const acquisitionDate = new Date(cow.acquisitionDate);
+                const endDate = cow.lifecycleStatus === 'sold' && cow.soldDate ? new Date(cow.soldDate) : new Date();
+                const daysOnFarm = Math.floor((endDate.getTime() - acquisitionDate.getTime()) / (1000 * 60 * 60 * 24));
+                const yearsOnFarm = (daysOnFarm / 365).toFixed(1);
+                
                 return (
                     <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Quick Stats</CardTitle>
+                            <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Lifecycle Overview</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="flex items-center text-slate-700 dark:text-slate-300">
@@ -171,6 +227,56 @@ export function CowProfile({
                     </Card>
                 );
             })()}
+
+            {/* Duration & Cost Analysis */}
+            <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Duration & Cost Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Acquisition Source</p>
+                            <p className="font-semibold text-slate-900 dark:text-white">{cow.acquisitionSource || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Acquisition Cost</p>
+                            <p className="font-semibold text-slate-900 dark:text-white">{cow.acquisitionCost ? `₹${cow.acquisitionCost}` : 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Duration on Farm</p>
+                        <p className="font-semibold text-slate-900 dark:text-white">
+                            {(() => {
+                                const acquisitionDate = new Date(cow.acquisitionDate);
+                                const endDate = cow.lifecycleStatus === 'sold' && cow.soldDate ? new Date(cow.soldDate) : new Date();
+                                const daysOnFarm = Math.floor((endDate.getTime() - acquisitionDate.getTime()) / (1000 * 60 * 60 * 24));
+                                const yearsOnFarm = (daysOnFarm / 365).toFixed(1);
+                                return `${daysOnFarm} days (${yearsOnFarm} years)`;
+                            })()}
+                        </p>
+                    </div>
+                    {cow.lifecycleStatus === 'sold' && cow.acquisitionCost && cow.soldPrice && (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Profit/Loss Calculation</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-700 dark:text-slate-300">Acquisition Cost:</span>
+                                <span className="font-semibold">₹{cow.acquisitionCost}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-700 dark:text-slate-300">Sold Price:</span>
+                                <span className="font-semibold">₹{cow.soldPrice}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+                                <span className="font-semibold text-slate-900 dark:text-white">Net Profit/Loss:</span>
+                                <span className={typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' && cow.soldPrice > cow.acquisitionCost ? 'text-emerald-600 font-bold' : typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' && cow.soldPrice < cow.acquisitionCost ? 'text-red-600 font-bold' : 'text-slate-900 dark:text-white'}>
+                                    ₹{typeof cow.soldPrice === 'number' && typeof cow.acquisitionCost === 'number' ? (cow.soldPrice - cow.acquisitionCost).toFixed(2) : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Quick Actions */}
             <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
@@ -242,6 +348,66 @@ export function CowProfile({
                 onConfirm={handleConfirmStatusChange}
                 variant={pendingStatus === 'deceased' || pendingStatus === 'sold' ? 'destructive' : 'default'}
             />
+
+            {/* Sale Information Dialog */}
+            <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Mark Cow as Sold</DialogTitle>
+                        <DialogDescription>
+                            Enter the sale details for {cow.name || cow.tagId}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="soldTo">Sold To (Buyer Name) *</Label>
+                            <Input
+                                id="soldTo"
+                                placeholder="Ramesh Kumar"
+                                value={saleInfo.soldTo}
+                                onChange={(e) => setSaleInfo({ ...saleInfo, soldTo: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="soldPrice">Sale Price (₹) *</Label>
+                            <Input
+                                id="soldPrice"
+                                type="number"
+                                placeholder="45000"
+                                value={saleInfo.soldPrice}
+                                onChange={(e) => setSaleInfo({ ...saleInfo, soldPrice: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="soldDate">Sale Date *</Label>
+                            <Input
+                                id="soldDate"
+                                type="date"
+                                value={saleInfo.soldDate}
+                                onChange={(e) => setSaleInfo({ ...saleInfo, soldDate: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="soldDescription">Description (Optional)</Label>
+                            <textarea
+                                id="soldDescription"
+                                placeholder="Additional notes about the sale..."
+                                value={saleInfo.soldDescription}
+                                onChange={(e) => setSaleInfo({ ...saleInfo, soldDescription: e.target.value })}
+                                className="min-h-20 w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSaleDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaleSubmit} disabled={!saleInfo.soldTo || !saleInfo.soldPrice || !saleInfo.soldDate}>
+                            Mark as Sold
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

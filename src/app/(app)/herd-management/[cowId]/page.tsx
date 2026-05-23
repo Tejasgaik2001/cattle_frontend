@@ -61,9 +61,9 @@ export default function CowProfilePage() {
         console.log('Record milk for cow:', cowId);
     };
 
-    const handleMarkLifecycleStatus = async (cowId: string, status: 'active' | 'sold' | 'deceased') => {
+    const handleMarkLifecycleStatus = async (cowId: string, status: 'active' | 'sold' | 'deceased', saleInfo?: { soldTo: string; soldPrice: number; soldDate: string; soldDescription?: string }) => {
         try {
-            await cowsApi.updateCowLifecycleStatus(cowId, status);
+            await cowsApi.updateCowLifecycleStatus(cowId, status, saleInfo);
             fetchCowData(); // Refresh
         } catch (error) {
             console.error('Failed to update lifecycle status:', error);

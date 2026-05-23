@@ -73,9 +73,13 @@ export const cowsApi = {
      */
     async updateCowLifecycleStatus(
         id: string,
-        status: 'active' | 'sold' | 'deceased'
+        status: 'active' | 'sold' | 'deceased',
+        saleInfo?: { soldTo: string; soldPrice: number; soldDate: string; soldDescription?: string }
     ): Promise<Cow> {
-        const response = await api.patch(`/cows/${id}/lifecycle`, { lifecycleStatus: status });
+        const response = await api.patch(`/cows/${id}/lifecycle`, { 
+            lifecycleStatus: status,
+            ...(saleInfo && { soldTo: saleInfo.soldTo, soldPrice: saleInfo.soldPrice, soldDate: saleInfo.soldDate, soldDescription: saleInfo.soldDescription })
+        });
         return response.data;
     },
 

@@ -13,7 +13,13 @@ export interface Cow {
     acquisitionDate: string; // YYYY-MM-DD
     lifecycleStatus: 'active' | 'sold' | 'deceased';
     acquisitionSource: string | null;
+    acquisitionCost: number | null;
     motherId: string | null;
+    // Sale information
+    soldTo: string | null;
+    soldPrice: number | null;
+    soldDate: string | null;
+    soldDescription: string | null;
 }
 
 // Metadata interfaces for CowEvent types
