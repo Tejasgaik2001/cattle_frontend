@@ -3,7 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, FileText, Download, History, Droplets, Wallet, TrendingUp, Filter, HeartPulse, Activity, DollarSign } from 'lucide-react';
+import { 
+    BarChart3, 
+    FileText,
+    Download, 
+    Droplets, 
+    Wallet, 
+    TrendingUp, 
+    DollarSign,
+    PieChart as PieChartIcon
+} from 'lucide-react';
+import { 
+    LineChart, 
+    Line, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
+} from 'recharts';
 import { reportsApi, ReportQuery } from '@/lib/api/reports';
 import { toast } from 'sonner';
 import { AdvancedFilters } from './components/AdvancedFilters';
@@ -15,7 +36,6 @@ export default function ReportsAnalyticsPage() {
     const [filters, setFilters] = useState<ReportQuery>({ timeframe: 'last_30_days' });
     const [data, setData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [exportHistory, setExportHistory] = useState<any[]>([]);
 
     const fetchData = async () => {
         try {
@@ -25,15 +45,6 @@ export default function ReportsAnalyticsPage() {
                 setData(res);
             } else if (activeTab === 'financial') {
                 const res = await reportsApi.getFinancialReport(filters);
-                setData(res);
-            } else if (activeTab === 'health') {
-                const res = await reportsApi.getHealthReport(filters);
-                setData(res);
-            } else if (activeTab === 'history') {
-                const res = await reportsApi.getExportHistory();
-                setExportHistory(res);
-            } else if (activeTab === 'analytics') {
-                const res = await reportsApi.getPredictions();
                 setData(res);
             }
         } catch (err) {
@@ -50,26 +61,26 @@ export default function ReportsAnalyticsPage() {
     const handleExport = async (format: 'excel' | 'csv' | 'pdf') => {
         try {
             toast.info(`Generating ${format.toUpperCase()} report...`);
-            await reportsApi.exportReport(activeTab as any, { ...filters, format });
+            const exportType = activeTab === 'milk' ? 'milk-production' : activeTab;
+            await reportsApi.exportReport(exportType as any, { ...filters, format });
             toast.success('Report downloaded successfully');
-            if (activeTab === 'history') fetchData();
         } catch (err) {
             toast.error('Export failed');
         }
     };
 
     const milkStats = data?.summary ? [
-        { label: 'Total Production', value: `${data.summary.totalLiters.toFixed(1)} L`, icon: Droplets, color: 'bg-blue-500' },
-        { label: 'Avg per Session', value: `${data.summary.avgLitersPerSession.toFixed(1)} L`, icon: TrendingUp, color: 'bg-emerald-500' },
-        { label: 'Total Revenue', value: `₹${data.summary.totalIncome.toLocaleString('en-IN')}`, icon: Wallet, color: 'bg-indigo-500' },
-        { label: 'Record Count', value: data.summary.recordCount, icon: FileText, color: 'bg-slate-500' },
+        { label: 'Total Production', value: `${(data.summary.totalLiters || 0).toFixed(1)} L`, icon: Droplets, color: 'bg-blue-500' },
+        { label: 'Avg per Session', value: `${(data.summary.avgLitersPerSession || 0).toFixed(1)} L`, icon: TrendingUp, color: 'bg-emerald-500' },
+        { label: 'Total Revenue', value: `₹${(data.summary.totalIncome || 0).toLocaleString('en-IN')}`, icon: Wallet, color: 'bg-indigo-500' },
+        { label: 'Records', value: data.summary.recordCount || 0, icon: BarChart3, color: 'bg-slate-500' },
     ] : [];
 
     const financialStats = data?.summary ? [
-        { label: 'Total Income', value: `₹${data.summary.totalIncome.toLocaleString('en-IN')}`, icon: TrendingUp, color: 'bg-emerald-500' },
-        { label: 'Total Expense', value: `₹${data.summary.totalExpense.toLocaleString('en-IN')}`, icon: Wallet, color: 'bg-red-500' },
-        { label: 'Net Profit', value: `₹${data.summary.netProfit.toLocaleString('en-IN')}`, icon: DollarSign, color: 'bg-blue-500' },
-        { label: 'Profit Margin', value: `${data.summary.margin.toFixed(1)}%`, icon: BarChart3, color: 'bg-amber-500' },
+        { label: 'Total Income', value: `₹${(data.summary.totalIncome || 0).toLocaleString('en-IN')}`, icon: TrendingUp, color: 'bg-emerald-500' },
+        { label: 'Total Expense', value: `₹${(data.summary.totalExpense || 0).toLocaleString('en-IN')}`, icon: Wallet, color: 'bg-red-500' },
+        { label: 'Net Profit', value: `₹${(data.summary.netProfit || 0).toLocaleString('en-IN')}`, icon: DollarSign, color: 'bg-blue-500' },
+        { label: 'Profit Margin', value: `${(data.summary.margin || 0).toFixed(1)}%`, icon: BarChart3, color: 'bg-amber-500' },
     ] : [];
 
     return (
@@ -101,15 +112,6 @@ export default function ReportsAnalyticsPage() {
                     <TabsTrigger value="financial" className="rounded-xl px-6 font-bold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                         <Wallet className="h-4 w-4 mr-2" /> Financials
                     </TabsTrigger>
-                    <TabsTrigger value="health" className="rounded-xl px-6 font-bold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                        <HeartPulse className="h-4 w-4 mr-2" /> Health
-                    </TabsTrigger>
-                    <TabsTrigger value="analytics" className="rounded-xl px-6 font-bold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                        <TrendingUp className="h-4 w-4 mr-2" /> Predictions
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="rounded-xl px-6 font-bold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                        <History className="h-4 w-4 mr-2" /> History
-                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="milk" className="space-y-6">
@@ -119,45 +121,47 @@ export default function ReportsAnalyticsPage() {
                     <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                         <CardHeader className="border-b border-slate-100 dark:border-slate-800">
                             <CardTitle className="text-lg font-black flex items-center gap-2">
-                                <FileText className="h-5 w-5 text-emerald-500" />
-                                Detailed Records
+                                <TrendingUp className="h-5 w-5 text-blue-500" />
+                                Production Summary Trend
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 uppercase text-[11px] font-black tracking-widest">
-                                            <th className="px-6 py-4 text-left">Date</th>
-                                            <th className="px-6 py-4 text-left">Session</th>
-                                            <th className="px-6 py-4 text-left">Cow</th>
-                                            <th className="px-6 py-4 text-right">Liters</th>
-                                            <th className="px-6 py-4 text-right">Rate</th>
-                                            <th className="px-6 py-4 text-right">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {isLoading ? (
-                                            <tr><td colSpan={6} className="py-20 text-center text-slate-400">Loading records...</td></tr>
-                                        ) : data?.records.length === 0 ? (
-                                            <tr><td colSpan={6} className="py-20 text-center text-slate-400">No records found for this period.</td></tr>
-                                        ) : data?.records.map((r: any) => (
-                                            <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <td className="px-6 py-4 font-bold">{format(new Date(r.date), 'dd MMM yyyy')}</td>
-                                                <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase">{r.milkingTime}</span></td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-emerald-600">{r.cow?.tagId}</span>
-                                                        <span className="text-[11px] text-slate-400">{r.cow?.name || 'Unnamed'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-right font-black">{Number(r.amount).toFixed(1)} L</td>
-                                                <td className="px-6 py-4 text-right text-slate-500">₹{r.pricePerLiter}</td>
-                                                <td className="px-6 py-4 text-right font-black text-emerald-600">₹{Number(r.totalValue).toLocaleString('en-IN')}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <CardContent className="p-6">
+                            <div className="h-96 w-full">
+                                {isLoading ? (
+                                    <div className="h-full flex items-center justify-center text-slate-400 font-medium animate-pulse">
+                                        Summarizing trend data...
+                                    </div>
+                                ) : data?.trends && data.trends.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={data.trends}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fontSize: 11, fontWeight: 'bold' }}
+                                                tickFormatter={(str) => format(new Date(str), 'dd MMM')}
+                                            />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 'bold' }} />
+                                            <Tooltip 
+                                                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey="amount" 
+                                                stroke="#10b981" 
+                                                strokeWidth={4} 
+                                                dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-slate-400 font-medium">
+                                        No summary data available for this period.
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -167,200 +171,98 @@ export default function ReportsAnalyticsPage() {
                     <AdvancedFilters filters={filters} onFilterChange={setFilters} />
                     <ReportSummaryCards stats={financialStats} />
                     
-                    <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
-                        <CardHeader className="border-b border-slate-100 dark:border-slate-800">
-                            <CardTitle className="text-lg font-black flex items-center gap-2">
-                                <DollarSign className="h-5 w-5 text-emerald-500" />
-                                Transaction Log
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 uppercase text-[11px] font-black tracking-widest">
-                                            <th className="px-6 py-4 text-left">Date</th>
-                                            <th className="px-6 py-4 text-left">Category</th>
-                                            <th className="px-6 py-4 text-left">Description</th>
-                                            <th className="px-6 py-4 text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {isLoading ? (
-                                            <tr><td colSpan={4} className="py-20 text-center text-slate-400">Loading transactions...</td></tr>
-                                        ) : data?.transactions.length === 0 ? (
-                                            <tr><td colSpan={4} className="py-20 text-center text-slate-400">No transactions found for this period.</td></tr>
-                                        ) : data?.transactions.map((t: any) => (
-                                            <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <td className="px-6 py-4 font-bold">{format(new Date(t.date), 'dd MMM yyyy')}</td>
-                                                <td className="px-6 py-4"><span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-full text-[10px] font-black uppercase">{t.category}</span></td>
-                                                <td className="px-6 py-4 text-slate-500">{t.description}</td>
-                                                <td className={`px-6 py-4 text-right font-black ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                    {t.type === 'income' ? '+' : '-'} ₹{Number(t.amount).toLocaleString('en-IN')}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="health" className="space-y-6">
-                    <AdvancedFilters filters={filters} onFilterChange={setFilters} />
-                    <ReportSummaryCards stats={[
-                        { label: 'Total Events', value: data?.summary?.totalEvents || 0, icon: Activity, color: 'bg-indigo-500' },
-                        { label: 'Vaccinations', value: data?.summary?.VACCINATION || 0, icon: HeartPulse, color: 'bg-emerald-500' },
-                        { label: 'Treatments', value: data?.summary?.MEDICAL_TREATMENT || 0, icon: Droplets, color: 'bg-amber-500' },
-                    ]} />
-                    
-                    <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
-                        <CardHeader className="border-b border-slate-100 dark:border-slate-800">
-                            <CardTitle className="text-lg font-black flex items-center gap-2">
-                                <HeartPulse className="h-5 w-5 text-emerald-500" />
-                                Health Records
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 uppercase text-[11px] font-black tracking-widest">
-                                            <th className="px-6 py-4 text-left">Date</th>
-                                            <th className="px-6 py-4 text-left">Type</th>
-                                            <th className="px-6 py-4 text-left">Cow</th>
-                                            <th className="px-6 py-4 text-left">Description</th>
-                                            <th className="px-6 py-4 text-right">Cost</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {isLoading ? (
-                                            <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading health records...</td></tr>
-                                        ) : data?.records.length === 0 ? (
-                                            <tr><td colSpan={5} className="py-20 text-center text-slate-400">No records found for this period.</td></tr>
-                                        ) : data?.records.map((r: any) => (
-                                            <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <td className="px-6 py-4 font-bold">{format(new Date(r.date), 'dd MMM yyyy')}</td>
-                                                <td className="px-6 py-4"><span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 rounded-full text-[10px] font-black uppercase">{r.type.replace('_', ' ')}</span></td>
-                                                <td className="px-6 py-4">
-                                                    <span className="font-bold text-emerald-600">{r.cow?.tagId}</span>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-500">{r.description}</td>
-                                                <td className="px-6 py-4 text-right font-black">₹{(r.metadata as any)?.cost || 0}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="analytics" className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Calving Predictions */}
                         <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardHeader className="border-b border-slate-100 dark:border-slate-800">
-                                <CardTitle className="text-lg font-black flex items-center gap-2 text-indigo-600">
-                                    <BarChart3 className="h-5 w-5" />
-                                    Calving Predictions (90d)
+                                <CardTitle className="text-lg font-black flex items-center gap-2">
+                                    <PieChartIcon className="h-5 w-5 text-indigo-500" />
+                                    Category Distribution Summary
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {data?.calvingPredictions?.length === 0 ? (
-                                        <div className="p-10 text-center text-slate-400">No upcoming calvings predicted.</div>
-                                    ) : data?.calvingPredictions?.map((p: any) => (
-                                        <div key={p.tagId} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black">{p.tagId.slice(-2)}</div>
-                                                <div>
-                                                    <p className="font-bold">{p.tagId} - {p.name || 'Unnamed'}</p>
-                                                    <p className="text-xs text-slate-400">Expected: {format(new Date(p.expectedDate), 'dd MMM yyyy')}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${p.daysRemaining < 10 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                                                    {p.daysRemaining} days left
-                                                </span>
-                                            </div>
+                            <CardContent className="p-6">
+                                <div className="h-80">
+                                    {isLoading ? (
+                                        <div className="h-full flex items-center justify-center text-slate-400 font-medium animate-pulse">
+                                            Generating distribution...
                                         </div>
-                                    ))}
+                                    ) : data?.categoryBreakdown && Object.keys(data.categoryBreakdown).length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={Object.entries(data.categoryBreakdown).map(([name, value]) => ({ 
+                                                        name: name.replace('_', ' ').toUpperCase(), 
+                                                        value 
+                                                    }))}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={70}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {Object.entries(data.categoryBreakdown).map((_, index) => (
+                                                        <Cell key={`cell-${index}`} fill={['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 5]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                    formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-slate-400 font-medium">
+                                            No breakdown summary available.
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Top Performers */}
                         <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardHeader className="border-b border-slate-100 dark:border-slate-800">
-                                <CardTitle className="text-lg font-black flex items-center gap-2 text-emerald-600">
-                                    <TrendingUp className="h-5 w-5" />
-                                    Top Productive Cows
+                                <CardTitle className="text-lg font-black flex items-center gap-2">
+                                    <BarChart3 className="h-5 w-5 text-emerald-500" />
+                                    Top Expenditure Categories
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {data?.performance?.topPerformers?.map((p: any, idx: number) => (
-                                        <div key={p.tagId} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold">#{idx + 1}</div>
-                                                <div>
-                                                    <p className="font-bold">{p.tagId}</p>
-                                                    <p className="text-xs text-slate-400">{p.name || 'Unnamed'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-black text-emerald-600">{Number(p.avgDaily).toFixed(1)} L/day</p>
-                                                <p className="text-[10px] text-slate-400 uppercase font-bold">Total: {Number(p.totalProduced).toFixed(0)}L</p>
-                                            </div>
+                            <CardContent className="p-6">
+                                <div className="space-y-6">
+                                    {isLoading ? (
+                                        <div className="space-y-4">
+                                            {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />)}
                                         </div>
-                                    ))}
+                                    ) : data?.categoryBreakdown && Object.keys(data.categoryBreakdown).length > 0 ? (
+                                        Object.entries(data.categoryBreakdown)
+                                            .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                            .slice(0, 5)
+                                            .map(([name, value], index) => (
+                                                <div key={name} className="space-y-2">
+                                                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                                                        <span className="text-slate-500">{name.replace('_', ' ')}</span>
+                                                        <span className="text-slate-900 dark:text-white">₹{(value as number).toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full rounded-full transition-all duration-1000" 
+                                                            style={{ 
+                                                                width: `${((value as number) / (data.summary.totalIncome + data.summary.totalExpense)) * 100}%`,
+                                                                backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 5]
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-slate-400 font-medium py-20">
+                                            No summary available.
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
-                </TabsContent>
-
-                <TabsContent value="history" className="space-y-6">
-                    <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
-                        <CardHeader className="border-b border-slate-100 dark:border-slate-800">
-                            <CardTitle className="text-lg font-black flex items-center gap-2">
-                                <History className="h-5 w-5 text-emerald-500" />
-                                Download History
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 uppercase text-[11px] font-black tracking-widest">
-                                            <th className="px-6 py-4 text-left">Generated At</th>
-                                            <th className="px-6 py-4 text-left">Report Type</th>
-                                            <th className="px-6 py-4 text-left">Format</th>
-                                            <th className="px-6 py-4 text-left">File Name</th>
-                                            <th className="px-6 py-4 text-right">Size</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {isLoading ? (
-                                            <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading history...</td></tr>
-                                        ) : exportHistory.length === 0 ? (
-                                            <tr><td colSpan={5} className="py-20 text-center text-slate-400">No export history found.</td></tr>
-                                        ) : exportHistory.map((h: any) => (
-                                            <tr key={h.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <td className="px-6 py-4 font-bold">{format(new Date(h.createdAt), 'dd MMM yyyy HH:mm')}</td>
-                                                <td className="px-6 py-4 uppercase font-black text-[10px] tracking-widest">{h.reportType.replace('-', ' ')}</td>
-                                                <td className="px-6 py-4 uppercase font-bold text-emerald-600">{h.format}</td>
-                                                <td className="px-6 py-4 text-slate-500">{h.fileName}</td>
-                                                <td className="px-6 py-4 text-right">{(h.fileSize / 1024).toFixed(1)} KB</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </TabsContent>
             </Tabs>
         </div>
