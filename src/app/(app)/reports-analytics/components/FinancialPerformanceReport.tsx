@@ -31,7 +31,7 @@ export function FinancialPerformanceReport({ incomeExpenseTrend, expenseBreakdow
               <Tooltip
                 contentStyle={{ backgroundColor: 'rgb(var(--color-slate-800))', borderColor: 'rgb(var(--color-slate-700))', borderRadius: '0.5rem' }}
                 itemStyle={{ color: 'rgb(var(--color-slate-200))' }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(Number(value) || 0)}
               />
               <Legend />
               <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} name="Income" />
@@ -52,7 +52,7 @@ export function FinancialPerformanceReport({ incomeExpenseTrend, expenseBreakdow
               <Tooltip
                 contentStyle={{ backgroundColor: 'rgb(var(--color-slate-800))', borderColor: 'rgb(var(--color-slate-700))', borderRadius: '0.5rem' }}
                 itemStyle={{ color: 'rgb(var(--color-slate-200))' }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(Number(value) || 0)}
               />
               <Bar dataKey="amount" fill="#3b82f6" name="Amount" />
             </BarChart>

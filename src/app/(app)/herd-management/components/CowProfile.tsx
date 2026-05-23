@@ -42,7 +42,7 @@ const getEventIcon = (eventType: CowEvent['type']) => {
         case 'HEALTH': return <Stethoscope className="h-4 w-4 text-red-500" />;
         case 'VACCINATION': return <Droplets className="h-4 w-4 text-blue-500" />;
         case 'BREEDING': return <Baby className="h-4 w-4 text-pink-500" />;
-        case 'FINANCIAL': return <PiggyBank className="h-4 w-4 text-emerald-500" />;
+        case 'FINANCIAL': return <PiggyBank className="h-4 w-4 text-primary" />;
         case 'NOTE': return <Tag className="h-4 w-4 text-slate-500" />;
         default: return <Tag className="h-4 w-4 text-slate-500" />;
     }
@@ -99,18 +99,18 @@ export function CowProfile({
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
             {/* Back to Herd List */}
-            <Button variant="ghost" onClick={onBackToHerdList} className="text-slate-700 dark:text-slate-300">
+            <Button variant="ghost" onClick={onBackToHerdList} className="text-foreground/70 hover:text-foreground">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back to Herd
             </Button>
 
             {/* Top Identity Section */}
-            <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
+            <Card className="bg-card border-border shadow-sm">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
                     <div className="space-y-2">
-                        <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                        <h1 className="text-3xl font-bold text-primary">
                             {cow.name || 'Untitled Cow'}
                         </h1>
-                        <p className="text-xl text-slate-600 dark:text-slate-300">
+                        <p className="text-xl text-foreground">
                             Tag ID: {cow.tagId}
                         </p>
                         <Badge variant={getStatusBadgeVariant(cow.lifecycleStatus)}>
@@ -118,7 +118,7 @@ export function CowProfile({
                         </Badge>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={() => onEditCow(cow.id)} className="text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
+                        <Button variant="outline" onClick={() => onEditCow(cow.id)} className="text-foreground border-border">
                             <Edit className="h-4 w-4 mr-2" /> Edit Profile
                         </Button>
                         {cow.lifecycleStatus === 'active' && (
@@ -129,7 +129,7 @@ export function CowProfile({
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-700 dark:text-slate-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-foreground">
                         <div><strong>Breed:</strong> {cow.breed}</div>
                         <div><strong>Gender:</strong> <span className="capitalize">{cow.gender}</span></div>
                         <div><strong>Date of Birth:</strong> {formatDate(cow.dateOfBirth)}</div>
@@ -188,37 +188,37 @@ export function CowProfile({
             </Card>
 
             {/* Chronological Activity Timeline */}
-            <Card className="bg-white dark:bg-slate-800/50 shadow-sm">
+            <Card className="bg-card border-border shadow-sm">
                 <CardHeader>
-                    <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Activity Timeline</CardTitle>
+                    <CardTitle className="text-xl font-semibold text-foreground">Activity Timeline</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {sortedEvents.length === 0 ? (
                         <div className="text-center py-8">
-                            <p className="text-slate-500 dark:text-slate-400 mb-4">No events recorded for this cow yet.</p>
+                            <p className="text-muted-foreground mb-4">No events recorded for this cow yet.</p>
                             <Button onClick={() => onAddCowEvent(cow.id)} variant="outline">
                                 <PlusCircle className="h-4 w-4 mr-2" /> Add First Event
                             </Button>
                         </div>
                     ) : (
                         <div className="relative pl-8">
-                            <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
+                            <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
                             {sortedEvents.map((event) => (
                                 <div key={event.id} className="relative mb-6 last:mb-0">
-                                    <div className="absolute -left-4 top-0 h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 z-10">
+                                    <div className="absolute -left-4 top-0 h-8 w-8 flex items-center justify-center rounded-full bg-muted border border-border z-10">
                                         {getEventIcon(event.type)}
                                     </div>
-                                    <div className="ml-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center">
+                                    <div className="ml-4 p-4 bg-muted rounded-lg border border-border">
+                                        <p className="text-xs text-muted-foreground flex items-center">
                                             <Calendar className="h-3 w-3 mr-1" /> {formatDate(event.date)}
                                         </p>
-                                        <p className="font-semibold text-slate-800 dark:text-slate-100 mt-1">{event.type.replace('_', ' ')}</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{event.description}</p>
+                                        <p className="font-semibold text-foreground mt-1">{event.type.replace('_', ' ')}</p>
+                                        <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                                         {event.metadata && Object.keys(event.metadata).length > 0 && (
-                                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                                            <div className="mt-2 text-xs text-muted-foreground space-y-1">
                                                 {Object.entries(event.metadata).map(([key, value]) => (
                                                     <p key={key}>
-                                                        <strong className="text-slate-700 dark:text-slate-300">
+                                                        <strong className="text-foreground">
                                                             {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
                                                         </strong> {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                     </p>

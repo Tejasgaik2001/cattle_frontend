@@ -207,7 +207,7 @@ export default function ReportsAnalyticsPage() {
                                                 <Tooltip 
                                                     contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                                                     itemStyle={{ color: '#fff' }}
-                                                    formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                                                    formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>

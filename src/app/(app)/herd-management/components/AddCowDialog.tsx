@@ -20,14 +20,16 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { cowsApi, type CreateCowDto } from '@/lib/api/cows';
+import type { Cow } from '@/types';
 
 interface AddCowDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
+    cow?: Cow | null;
 }
 
-export function AddCowDialog({ open, onOpenChange, onSuccess }: AddCowDialogProps) {
+export function AddCowDialog({ open, onOpenChange, onSuccess, cow }: AddCowDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -42,6 +44,36 @@ export function AddCowDialog({ open, onOpenChange, onSuccess }: AddCowDialogProp
         acquisitionSource: '',
         motherId: '',
     });
+
+    // Populate form when cow prop changes (edit mode)
+    React.useEffect(() => {
+        if (cow) {
+            setFormData({
+                tagId: cow.tagId,
+                name: cow.name || '',
+                gender: cow.gender,
+                breed: cow.breed,
+                dateOfBirth: cow.dateOfBirth,
+                acquisitionDate: cow.acquisitionDate,
+                lifecycleStatus: cow.lifecycleStatus,
+                acquisitionSource: cow.acquisitionSource || '',
+                motherId: cow.motherId || '',
+            });
+        } else {
+            // Reset form when opening in create mode
+            setFormData({
+                tagId: '',
+                name: '',
+                gender: 'female',
+                breed: '',
+                dateOfBirth: '',
+                acquisitionDate: '',
+                lifecycleStatus: 'active',
+                acquisitionSource: '',
+                motherId: '',
+            });
+        }
+    }, [cow, open]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -198,7 +230,7 @@ export function AddCowDialog({ open, onOpenChange, onSuccess }: AddCowDialogProp
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Adding...' : 'Add Cow'}
+                            {isSubmitting ? (cow ? 'Updating...' : 'Adding...') : (cow ? 'Update Cow' : 'Add Cow')}
                         </Button>
                     </DialogFooter>
                 </form>

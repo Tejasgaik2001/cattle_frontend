@@ -44,6 +44,7 @@ export default function FinancialsPage() {
     const [loans, setLoans] = useState<Loan[]>([]);
     const [people, setPeople] = useState<Person[]>([]);
     const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+    const [farmId, setFarmId] = useState<string>('');
     
     // Modal states
     const [showTxModal, setShowTxModal] = useState(false);
@@ -56,14 +57,15 @@ export default function FinancialsPage() {
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true);
-            const farmId = await getFarmId();
+            const currentFarmId = await getFarmId();
+            setFarmId(currentFarmId);
             
             // Initial data fetch
             const [summaryData, loansData, peopleData, txData] = await Promise.all([
                 financialApi.getMonthlySummary(year, month),
                 loansApi.getAll(),
                 peopleApi.getAll(),
-                financialApi.getTransactions(farmId, { limit: 20 })
+                financialApi.getTransactions(currentFarmId, { limit: 20 })
             ]);
 
             setSummary(summaryData);
@@ -251,7 +253,7 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'reimbursements' && (
-                        <ReimbursementsTab farmId="" />
+                        <ReimbursementsTab farmId={farmId} />
                     )}
 
                     {activeTab === 'categories' && (
@@ -259,7 +261,13 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'people' && (
-                        <PeopleManager farmId="" />
+                        <PeopleManager 
+                            people={people} 
+                            onUpdate={() => {
+                                // Refresh people data
+                                peopleApi.getAll().then(setPeople);
+                            }}
+                        />
                     )}
                 </div>
             )}
@@ -271,7 +279,7 @@ export default function FinancialsPage() {
                 onSuccess={fetchData} 
             />
             <AddLoanModal 
-                isOpen={showLoanModal} 
+                open={showLoanModal} 
                 onClose={() => setShowLoanModal(false)} 
                 onSuccess={fetchData} 
             />
