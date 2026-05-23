@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cattle-frontend
+    restart: unless-stopped
+    ports:
+      - '5174:3000'
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
