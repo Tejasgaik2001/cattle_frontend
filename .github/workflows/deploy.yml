@@ -35,8 +35,6 @@ jobs:
         with:
           context: .
           push: true
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://api.cattle.tejasgaikwad.in
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}:master
             ghcr.io/${{ env.IMAGE_NAME }}:latest
@@ -64,6 +62,7 @@ jobs:
               --name cattle-frontend \
               -p 3006:3000 \
               --restart unless-stopped \
+              --env-file .env \
               ghcr.io/${{ env.IMAGE_NAME }}:master
 
             docker system prune -f
