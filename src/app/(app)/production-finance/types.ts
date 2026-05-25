@@ -29,7 +29,7 @@ export interface FinancialTransaction {
 /** Aggregated financial and production metrics for a selected period. */
 export interface ProductionFinanceOverview {
   totalMilkProduction: number; // in Liters
-  totalIncome: number; // in INR
+  milkIncome: number; // in INR (only from milk sales)
   totalExpenses: number; // in INR
   netProfitLoss: number; // in INR
   currentPeriod: string; // System-controlled, e.g., "January 2026"

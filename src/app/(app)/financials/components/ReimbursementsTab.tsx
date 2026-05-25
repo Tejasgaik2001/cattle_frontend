@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, Calendar, ArrowUpRight, ArrowDownLeft, Plus } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Download } from 'lucide-react';
 import { reimbursementsApi } from '@/lib/api/reimbursements';
 import { financialApi } from '@/lib/api/financial';
-import type { SpendingByPerson, MemberDue, Person } from '../types';
+import { usersApi, type User } from '@/lib/api/users';
+import type { SpendingByPerson, MemberDue } from '../types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import * as XLSX from 'xlsx';
 
 interface ReimbursementsTabProps {
     farmId: string;
@@ -23,14 +25,22 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingItem, setPendingItem] = useState<MemberDue | null>(null);
     const [paymentAmount, setPaymentAmount] = useState<string>('');
+    const [displayPaymentAmount, setDisplayPaymentAmount] = useState<string>('');
     const [isPartialPayment, setIsPartialPayment] = useState(false);
     const [lendDialogOpen, setLendDialogOpen] = useState(false);
-    const [persons, setPersons] = useState<Person[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [lendForm, setLendForm] = useState({
         personId: '',
         amount: '',
+        displayAmount: '',
         date: new Date().toISOString().split('T')[0],
         description: '',
+    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+    const [exportDateRange, setExportDateRange] = useState({
+        from: '',
+        to: '',
     });
 
     const fetchDues = async () => {
@@ -45,23 +55,44 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
         }
     };
 
-    const fetchPersons = async () => {
+    const fetchUsers = async () => {
         try {
-            const data = await financialApi.getPersons();
-            setPersons(data);
+            const data = await usersApi.getAll();
+            setUsers(data);
         } catch (error) {
-            toast.error('Failed to load persons');
+            toast.error('Failed to load users');
         }
+    };
+
+    const formatIndianCurrency = (value: string): string => {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        if (!numericValue) return '';
+        const num = parseInt(numericValue, 10);
+        return num.toLocaleString('en-IN');
+    };
+
+    const handleLendAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+        const numericValue = inputValue.replace(/[^0-9]/g, '');
+        setLendForm({ ...lendForm, amount: numericValue, displayAmount: formatIndianCurrency(numericValue) });
+    };
+
+    const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+        const numericValue = inputValue.replace(/[^0-9]/g, '');
+        setPaymentAmount(numericValue);
+        setDisplayPaymentAmount(formatIndianCurrency(numericValue));
     };
 
     useEffect(() => {
         fetchDues();
-        fetchPersons();
+        fetchUsers();
     }, [farmId]);
 
     const handleSettleClick = (item: MemberDue) => {
         setPendingItem(item);
         setPaymentAmount('');
+        setDisplayPaymentAmount('');
         setIsPartialPayment(false);
         setConfirmOpen(true);
     };
@@ -99,6 +130,57 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
         return `₹${Math.abs(Number(val)).toLocaleString('en-IN')}`;
     };
 
+    const handleExportToExcel = () => {
+        try {
+            const exportData: any[] = [];
+            
+            pendingGroups.forEach(group => {
+                group.items.forEach(item => {
+                    const itemDate = item.linkedTransaction 
+                        ? new Date(item.linkedTransaction.date)
+                        : new Date(item.createdAt);
+                    
+                    // Filter by date range if provided
+                    if (exportDateRange.from && new Date(exportDateRange.from) > itemDate) return;
+                    if (exportDateRange.to && new Date(exportDateRange.to) < itemDate) return;
+
+                    const remainingAmount = item.amount - (item.paidAmount || 0);
+                    exportData.push({
+                        'Person Name': group.name,
+                        'Type': item.type === 'BUSINESS_OWES' ? 'Business Owes' : 'Member Owes Business',
+                        'Total Amount': item.amount,
+                        'Paid Amount': item.paidAmount || 0,
+                        'Remaining Amount': remainingAmount,
+                        'Status': item.status,
+                        'Date': item.linkedTransaction 
+                            ? new Date(item.linkedTransaction.date).toLocaleDateString()
+                            : new Date(item.createdAt).toLocaleDateString(),
+                        'Category': item.linkedTransaction?.category || 'N/A',
+                        'Description': item.note || item.linkedTransaction?.description || 'N/A',
+                        'Settled At': item.settledAt ? new Date(item.settledAt).toLocaleDateString() : 'Not Settled',
+                    });
+                });
+            });
+
+            if (exportData.length === 0) {
+                toast.error('No data to export for the selected date range');
+                return;
+            }
+
+            // Convert to Excel
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Member Dues');
+            
+            const fileName = `member-dues-${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            
+            toast.success('Exported to Excel successfully');
+        } catch (error) {
+            toast.error('Failed to export to Excel');
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center p-12">
@@ -119,55 +201,93 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
 
     return (
         <div className="space-y-8">
-            {/* Header with Lend Money Button */}
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Member Dues</h2>
-                <Button onClick={() => setLendDialogOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Lend Money
+            {/* Refresh Button at Top */}
+            <div className="flex justify-end">
+                <Button onClick={() => { fetchDues(); fetchUsers(); }} variant="outline" className="border-slate-300 dark:border-slate-700">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
                 </Button>
             </div>
 
-            {pendingGroups.map((group) => (
-                <div key={group.personId} className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm">
-                    {/* Person Header */}
-                    <div className="px-8 py-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xl font-black shadow-lg">
-                                {group.name[0]?.toUpperCase()}
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                                    {group.name}
-                                    <span className="px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest">
-                                        {group.role}
-                                    </span>
-                                </h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Member Balance Account</p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex gap-6 md:gap-12 border-t md:border-t-0 pt-4 md:pt-0 border-slate-200 dark:border-slate-700">
-                            <div>
-                                <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-1">Business Owes Them</p>
-                                <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(group.businessOwes)}</p>
-                            </div>
-                            <div className="w-px h-10 bg-slate-200 dark:bg-slate-700 hidden md:block" />
-                            <div>
-                                <p className="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-widest mb-1">They Owe Business</p>
-                                <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(group.owesBusiness)}</p>
-                            </div>
-                        </div>
+            {/* Header with Lend Money and Export Buttons */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Member Dues</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <Label htmlFor="exportFrom" className="text-xs">From:</Label>
+                        <Input
+                            id="exportFrom"
+                            type="date"
+                            value={exportDateRange.from}
+                            onChange={(e) => setExportDateRange({ ...exportDateRange, from: e.target.value })}
+                            className="w-32 h-8 text-sm"
+                        />
+                        <Label htmlFor="exportTo" className="text-xs">To:</Label>
+                        <Input
+                            id="exportTo"
+                            type="date"
+                            value={exportDateRange.to}
+                            onChange={(e) => setExportDateRange({ ...exportDateRange, to: e.target.value })}
+                            className="w-32 h-8 text-sm"
+                        />
                     </div>
+                    <Button onClick={handleExportToExcel} variant="outline" className="border-slate-300 dark:border-slate-700">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Excel
+                    </Button>
+                    <Button onClick={() => setLendDialogOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Lend Money
+                    </Button>
+                </div>
+            </div>
 
-                    {/* Detailed Dues List */}
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {group.items.map((item) => {
+            {pendingGroups.map((group) => {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = group.items.slice(startIndex, endIndex);
+                const totalPages = Math.ceil(group.items.length / itemsPerPage);
+
+                return (
+                    <div key={group.personId} className="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm">
+                        {/* Person Header */}
+                        <div className="px-8 py-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xl font-black shadow-lg">
+                                    {group.name[0]?.toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                                        {group.name}
+                                        <span className="px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest">
+                                            {group.role}
+                                        </span>
+                                    </h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Member Balance Account</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-6 md:gap-12 border-t md:border-t-0 pt-4 md:pt-0 border-slate-200 dark:border-slate-700">
+                                <div>
+                                    <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-1">Business Owes Them</p>
+                                    <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(group.businessOwes)}</p>
+                                </div>
+                                <div className="w-px h-10 bg-slate-200 dark:bg-slate-700 hidden md:block" />
+                                <div>
+                                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-widest mb-1">They Owe Business</p>
+                                    <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(group.owesBusiness)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Detailed Dues List */}
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {paginatedItems.map((item) => {
                             const remainingAmount = item.amount - (item.paidAmount || 0);
                             const isPartiallyPaid = item.status === 'PARTIALLY_PAID';
                             
                             return (
-                                <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors">
+                                <div key={item.id} className="px-8 py-5 flex items-center justify-between transition-colors">
                                     <div className="flex items-center gap-6">
                                         <div className={`p-3 rounded-2xl shadow-sm ${
                                             item.type === 'BUSINESS_OWES' 
@@ -236,8 +356,38 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
                             );
                         })}
                     </div>
+
+                    {/* Pagination Controls */}
+                    {group.items.length > itemsPerPage && (
+                        <div className="px-8 py-4 bg-slate-50/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                Showing {startIndex + 1}-{Math.min(endIndex, group.items.length)} of {group.items.length} items
+                            </p>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-slate-300 dark:border-slate-700"
+                                >
+                                    Previous
+                                </Button>
+                                <Button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-slate-300 dark:border-slate-700"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            ))}
+                );
+            })}
 
             <ConfirmationDialog
                 open={confirmOpen}
@@ -270,12 +420,10 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
                                 <Label htmlFor="paymentAmount">Payment Amount (₹)</Label>
                                 <Input
                                     id="paymentAmount"
-                                    type="number"
-                                    value={paymentAmount}
-                                    onChange={(e) => setPaymentAmount(e.target.value)}
-                                    placeholder="Enter amount"
-                                    min="0"
-                                    max={pendingItem?.amount}
+                                    type="text"
+                                    value={displayPaymentAmount}
+                                    onChange={handlePaymentAmountChange}
+                                    placeholder="e.g., 5,000"
                                     className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50"
                                 />
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -304,10 +452,10 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
                                 onChange={(e) => setLendForm({ ...lendForm, personId: e.target.value })}
                                 className="w-full mt-1.5 px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50"
                             >
-                                <option value="">Select a person</option>
-                                {persons.map((person) => (
-                                    <option key={person.id} value={person.id}>
-                                        {person.name} ({person.role})
+                                <option value="">Select a user</option>
+                                {users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name} ({user.globalRole.replace('_', ' ')})
                                     </option>
                                 ))}
                             </select>
@@ -316,11 +464,10 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
                             <Label htmlFor="amount">Amount (₹)</Label>
                             <Input
                                 id="amount"
-                                type="number"
-                                value={lendForm.amount}
-                                onChange={(e) => setLendForm({ ...lendForm, amount: e.target.value })}
-                                placeholder="Enter amount"
-                                min="0"
+                                type="text"
+                                value={lendForm.displayAmount}
+                                onChange={handleLendAmountChange}
+                                placeholder="e.g., 10,000"
                                 className="mt-1.5"
                             />
                         </div>
@@ -370,6 +517,7 @@ export function ReimbursementsTab({ farmId }: ReimbursementsTabProps) {
                                     setLendForm({
                                         personId: '',
                                         amount: '',
+                                        displayAmount: '',
                                         date: new Date().toISOString().split('T')[0],
                                         description: '',
                                     });

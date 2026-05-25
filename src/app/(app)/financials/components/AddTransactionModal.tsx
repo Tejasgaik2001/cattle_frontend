@@ -22,6 +22,7 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
     const [category, setCategory] = useState('');
     const [categories, setCategories] = useState<FinancialCategory[]>([]);
     const [amount, setAmount] = useState('');
+    const [displayAmount, setDisplayAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
     const [isPaidPersonally, setIsPaidPersonally] = useState(false);
@@ -48,6 +49,25 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
     }, [open]);
     console.log("setusersUsers",users)
 
+    const formatIndianCurrency = (value: string): string => {
+        // Remove non-numeric characters
+        const numericValue = value.replace(/[^0-9]/g, '');
+        if (!numericValue) return '';
+        
+        // Format with Indian number system (lakhs, crores)
+        const num = parseInt(numericValue, 10);
+        return num.toLocaleString('en-IN');
+    };
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+        // Store raw numeric value for submission
+        const numericValue = inputValue.replace(/[^0-9]/g, '');
+        setAmount(numericValue);
+        // Display formatted value
+        setDisplayAmount(formatIndianCurrency(numericValue));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!category || !amount || !date) {
@@ -64,7 +84,7 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                 amount: parseFloat(amount),
                 date,
                 description: description || undefined,
-                paidById: (type === 'expense' && isPaidPersonally && paidById) ? paidById : undefined,
+                paidById: (isPaidPersonally && paidById) ? paidById : undefined,
                 cowId: cowId || undefined,
             });
             toast.success('Transaction saved!');
@@ -72,6 +92,7 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
             onClose();
             setCategory('');
             setAmount('');
+            setDisplayAmount('');
             setDescription('');
             setIsPaidPersonally(false);
             setPaidById('');
@@ -137,11 +158,12 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Amount (₹) *</label>
                             <input
-                                type="number"
-                                placeholder="e.g., 5000"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm" />
+                                type="text"
+                                placeholder="e.g., 10,000"
+                                value={displayAmount}
+                                onChange={handleAmountChange}
+                                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Date *</label>
@@ -197,7 +219,7 @@ export function AddTransactionModal({ open, onClose, onSuccess }: AddTransaction
                                     onChange={(e) => setPaidById(e.target.value)}
                                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm">
                                     <option value="">Select user...</option>
-                                    {users.filter(u => u.isActive).map((u) => (
+                                    {users.map((u) => (
                                         <option key={u.id} value={u.id}>
                                             {u.name} ({u.globalRole.replace('_', ' ')})
                                         </option>

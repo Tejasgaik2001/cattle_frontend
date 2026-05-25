@@ -98,9 +98,7 @@ export default function ReportsAnalyticsPage() {
                     <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all">
                         <Download className="h-4 w-4" /> Excel
                     </button>
-                    <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 transition-all">
-                        <FileText className="h-4 w-4" /> PDF
-                    </button>
+             
                 </div>
             </div>
 
