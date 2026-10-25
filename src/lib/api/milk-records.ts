@@ -22,6 +22,8 @@ export interface UpdateMilkRecordDto {
     pricePerLiter?: number;
     dairyAmount?: number;
     dairyPricePerLiter?: number;
+    dairyFat?: number;
+    dairySnf?: number;
     isReconciled?: boolean;
     notes?: string;
 }

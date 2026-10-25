@@ -259,7 +259,7 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'people' && (
-                        <PeopleManager farmId="" />
+                        <PeopleManager people={people} onUpdate={fetchData} />
                     )}
                 </div>
             )}
@@ -271,7 +271,7 @@ export default function FinancialsPage() {
                 onSuccess={fetchData} 
             />
             <AddLoanModal 
-                isOpen={showLoanModal} 
+                open={showLoanModal} 
                 onClose={() => setShowLoanModal(false)} 
                 onSuccess={fetchData} 
             />
