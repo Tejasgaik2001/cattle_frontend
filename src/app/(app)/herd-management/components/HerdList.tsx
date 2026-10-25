@@ -5,10 +5,10 @@ import type { Cow } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ChevronRight, XIcon } from 'lucide-react';
+import { PlusCircle, Search, ChevronRight, XIcon, Users } from 'lucide-react';
 
 interface HerdListProps {
     cows: Cow[];
@@ -19,6 +19,7 @@ interface HerdListProps {
 
 export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }: HerdListProps) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'sold' | 'deceased'>('all');
 
@@ -100,10 +101,20 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
                         </Badge>
                     )}
                 </div>
-                <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <PlusCircle className="h-5 w-5 mr-2" />
-                    Add New Cow
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => router.push('/herd-management/family-tree')}
+                        className="text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    >
+                        <Users className="h-5 w-5 mr-2" />
+                        Family Tree
+                    </Button>
+                    <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <PlusCircle className="h-5 w-5 mr-2" />
+                        Add New Cow
+                    </Button>
+                </div>
             </div>
 
             {/* Search and Filter */}

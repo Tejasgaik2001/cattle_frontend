@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Wallet, 
-    Plus, 
-    History, 
-    PieChart as PieChartIcon, 
-    Users, 
+import {
+    Wallet,
+    Plus,
+    History,
+    PieChart as PieChartIcon,
+    Users,
     Building2,
     Loader2,
     Calendar,
@@ -19,12 +19,12 @@ import { financialApi } from '@/lib/api/financial';
 import { loansApi } from '@/lib/api/loans';
 import { peopleApi } from '@/lib/api/people';
 import { getFarmId } from '@/lib/farm';
-import { 
-    FinancialTransaction, 
-    Loan, 
-    Person, 
-    MonthlySummary, 
-    FinancialsTab 
+import {
+    FinancialTransaction,
+    Loan,
+    Person,
+    MonthlySummary,
+    FinancialsTab
 } from './types';
 
 // Components
@@ -44,11 +44,12 @@ export default function FinancialsPage() {
     const [loans, setLoans] = useState<Loan[]>([]);
     const [people, setPeople] = useState<Person[]>([]);
     const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
-    
+    const [farmId, setFarmId] = useState<string>('');
+
     // Modal states
     const [showTxModal, setShowTxModal] = useState(false);
     const [showLoanModal, setShowLoanModal] = useState(false);
-    
+
     // Period state
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState(new Date().getMonth());
@@ -56,21 +57,22 @@ export default function FinancialsPage() {
     const fetchData = useCallback(async () => {
         try {
             setIsLoading(true);
-            const farmId = await getFarmId();
-            
+            const currentFarmId = await getFarmId();
+            setFarmId(currentFarmId);
+
             // Initial data fetch
             const [summaryData, loansData, peopleData, txData] = await Promise.all([
                 financialApi.getMonthlySummary(year, month),
                 loansApi.getAll(),
                 peopleApi.getAll(),
-                financialApi.getTransactions(farmId, { limit: 20 })
+                financialApi.getTransactions(currentFarmId, { limit: 20 })
             ]);
 
             setSummary(summaryData);
             setLoans(loansData);
             setPeople(peopleData);
             setTransactions(txData.data || []);
-            
+
             // Ensure at least one owner exists for the farm
             if (!peopleData.find(p => p.role === 'owner')) {
                 await peopleApi.ensureOwner();
@@ -116,13 +118,13 @@ export default function FinancialsPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={() => setShowLoanModal(true)}
                         className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
                         <Building2 className="h-5 w-5" />
                         Add Loan
                     </button>
-                    <button 
+                    <button
                         onClick={() => setShowTxModal(true)}
                         className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-none active:scale-95">
                         <Plus className="h-5 w-5" />
@@ -160,7 +162,7 @@ export default function FinancialsPage() {
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Business Cash</p>
                     <div className="flex items-center justify-between">
                         <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                            ₹{Number((summary?.netBalance || 0) + 
+                            ₹{Number((summary?.netBalance || 0) +
                                 (summary?.spendingByPerson || []).reduce((sum, p) => sum + (Number(p.businessOwes) || 0) - (Number(p.owesBusiness) || 0), 0)
                             ).toLocaleString()}
                         </h3>
@@ -195,11 +197,10 @@ export default function FinancialsPage() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${
-                            activeTab === tab.id
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                        }`}>
+                            }`}>
                         <tab.icon className="h-4 w-4" />
                         {tab.label}
                     </button>
@@ -215,8 +216,8 @@ export default function FinancialsPage() {
             ) : (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === 'summary' && summary && (
-                        <MonthlySummaryCard 
-                            summary={summary} 
+                        <MonthlySummaryCard
+                            summary={summary}
                             onMonthChange={handleMonthChange}
                             year={year}
                             month={month}
@@ -251,7 +252,7 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'reimbursements' && (
-                        <ReimbursementsTab farmId="" />
+                        <ReimbursementsTab farmId={farmId} />
                     )}
 
                     {activeTab === 'categories' && (
@@ -259,21 +260,27 @@ export default function FinancialsPage() {
                     )}
 
                     {activeTab === 'people' && (
-                        <PeopleManager people={people} onUpdate={fetchData} />
+                        <PeopleManager
+                            people={people}
+                            onUpdate={() => {
+                                // Refresh people data
+                                peopleApi.getAll().then(setPeople);
+                            }}
+                        />
                     )}
                 </div>
             )}
 
             {/* Modals */}
-            <AddTransactionModal 
-                open={showTxModal} 
-                onClose={() => setShowTxModal(false)} 
-                onSuccess={fetchData} 
+            <AddTransactionModal
+                open={showTxModal}
+                onClose={() => setShowTxModal(false)}
+                onSuccess={fetchData}
             />
-            <AddLoanModal 
-                open={showLoanModal} 
-                onClose={() => setShowLoanModal(false)} 
-                onSuccess={fetchData} 
+            <AddLoanModal
+                open={showLoanModal}
+                onClose={() => setShowLoanModal(false)}
+                onSuccess={fetchData}
             />
         </div>
     );

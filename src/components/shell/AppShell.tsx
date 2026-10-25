@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MainNav } from './MainNav';
 import { UserMenu } from './UserMenu';
 import { ThemeToggle } from '../theme/theme-toggle';
-import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart, Wallet } from 'lucide-react';
+import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart, Wallet, Shield } from 'lucide-react';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -29,6 +29,7 @@ export function AppShell({ children, user, onLogout }: AppShellProps) {
         { label: 'Health', href: '/health-breeding', icon: HeartPulse },
         { label: 'Production', href: '/production-finance', icon: Landmark },
         { label: 'Reports', href: '/reports-analytics', icon: BarChart },
+        { label: 'Users', href: '/user-management', icon: Shield },
     ];
 
 

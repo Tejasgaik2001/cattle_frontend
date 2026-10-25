@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { CowProfile } from '../components/CowProfile';
 import { AddEventDialog } from '../components/AddEventDialog';
+import { AddCowDialog } from '../components/AddCowDialog';
 import { cowsApi } from '@/lib/api/cows';
 import { cowEventsApi } from '@/lib/api/cow-events';
 import type { Cow, CowEvent } from '@/types';
@@ -17,6 +18,7 @@ export default function CowProfilePage() {
     const [cowEvents, setCowEvents] = useState<CowEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
 
     const fetchCowData = async () => {
         try {
@@ -47,8 +49,7 @@ export default function CowProfilePage() {
     };
 
     const handleEditCow = (cowId: string) => {
-        // TODO: Implement edit dialog
-        console.log('Edit cow:', cowId);
+        setShowEditDialog(true);
     };
 
     const handleAddEventSuccess = () => {
@@ -60,9 +61,9 @@ export default function CowProfilePage() {
         console.log('Record milk for cow:', cowId);
     };
 
-    const handleMarkLifecycleStatus = async (cowId: string, status: 'active' | 'sold' | 'deceased') => {
+    const handleMarkLifecycleStatus = async (cowId: string, status: 'active' | 'sold' | 'deceased', saleInfo?: { soldTo: string; soldPrice: number; soldDate: string; soldDescription?: string }) => {
         try {
-            await cowsApi.updateCowLifecycleStatus(cowId, status);
+            await cowsApi.updateCowLifecycleStatus(cowId, status, saleInfo);
             fetchCowData(); // Refresh
         } catch (error) {
             console.error('Failed to update lifecycle status:', error);
@@ -91,6 +92,13 @@ export default function CowProfilePage() {
                 onOpenChange={setShowAddEventDialog}
                 cowId={cowId}
                 onSuccess={handleAddEventSuccess}
+            />
+
+            <AddCowDialog
+                open={showEditDialog}
+                onOpenChange={setShowEditDialog}
+                onSuccess={fetchCowData}
+                cow={cow}
             />
         </>
     );

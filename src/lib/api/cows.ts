@@ -73,9 +73,13 @@ export const cowsApi = {
      */
     async updateCowLifecycleStatus(
         id: string,
-        status: 'active' | 'sold' | 'deceased'
+        status: 'active' | 'sold' | 'deceased',
+        saleInfo?: { soldTo: string; soldPrice: number; soldDate: string; soldDescription?: string }
     ): Promise<Cow> {
-        const response = await api.patch(`/cows/${id}/lifecycle`, { lifecycleStatus: status });
+        const response = await api.patch(`/cows/${id}/lifecycle`, { 
+            lifecycleStatus: status,
+            ...(saleInfo && { soldTo: saleInfo.soldTo, soldPrice: saleInfo.soldPrice, soldDate: saleInfo.soldDate, soldDescription: saleInfo.soldDescription })
+        });
         return response.data;
     },
 
@@ -99,6 +103,14 @@ export const cowsApi = {
      */
     async getActiveFemales(): Promise<{ id: string; tagId: string; name: string | null }[]> {
         const response = await api.get(`/cows/active-females`);
+        return response.data;
+    },
+
+    /**
+     * Get family tree data for all cows
+     */
+    async getFamilyTree(): Promise<Cow[]> {
+        const response = await api.get(`/cows/family-tree`);
         return response.data;
     },
 };

@@ -3,23 +3,23 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-    BarChart3, 
+import {
+    BarChart3,
     FileText,
-    Download, 
-    Droplets, 
-    Wallet, 
-    TrendingUp, 
+    Download,
+    Droplets,
+    Wallet,
+    TrendingUp,
     DollarSign,
     PieChart as PieChartIcon
 } from 'lucide-react';
-import { 
-    LineChart, 
-    Line, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
     ResponsiveContainer,
     PieChart,
     Pie,
@@ -98,9 +98,7 @@ export default function ReportsAnalyticsPage() {
                     <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all">
                         <Download className="h-4 w-4" /> Excel
                     </button>
-                    <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 transition-all">
-                        <FileText className="h-4 w-4" /> PDF
-                    </button>
+
                 </div>
             </div>
 
@@ -117,7 +115,7 @@ export default function ReportsAnalyticsPage() {
                 <TabsContent value="milk" className="space-y-6">
                     <AdvancedFilters filters={filters} onFilterChange={setFilters} />
                     <ReportSummaryCards stats={milkStats} />
-                    
+
                     <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                         <CardHeader className="border-b border-slate-100 dark:border-slate-800">
                             <CardTitle className="text-lg font-black flex items-center gap-2">
@@ -135,23 +133,23 @@ export default function ReportsAnalyticsPage() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={data.trends}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                            <XAxis 
-                                                dataKey="date" 
-                                                axisLine={false} 
-                                                tickLine={false} 
+                                            <XAxis
+                                                dataKey="date"
+                                                axisLine={false}
+                                                tickLine={false}
                                                 tick={{ fontSize: 11, fontWeight: 'bold' }}
                                                 tickFormatter={(str) => format(new Date(str), 'dd MMM')}
                                             />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 'bold' }} />
-                                            <Tooltip 
+                                            <Tooltip
                                                 contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                                                 itemStyle={{ color: '#fff' }}
                                             />
-                                            <Line 
-                                                type="monotone" 
-                                                dataKey="amount" 
-                                                stroke="#10b981" 
-                                                strokeWidth={4} 
+                                            <Line
+                                                type="monotone"
+                                                dataKey="amount"
+                                                stroke="#10b981"
+                                                strokeWidth={4}
                                                 dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
                                                 activeDot={{ r: 6, strokeWidth: 0 }}
                                             />
@@ -170,7 +168,7 @@ export default function ReportsAnalyticsPage() {
                 <TabsContent value="financial" className="space-y-6">
                     <AdvancedFilters filters={filters} onFilterChange={setFilters} />
                     <ReportSummaryCards stats={financialStats} />
-                    
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardHeader className="border-b border-slate-100 dark:border-slate-800">
@@ -189,9 +187,9 @@ export default function ReportsAnalyticsPage() {
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
-                                                    data={Object.entries(data.categoryBreakdown).map(([name, value]) => ({ 
-                                                        name: name.replace('_', ' ').toUpperCase(), 
-                                                        value 
+                                                    data={Object.entries(data.categoryBreakdown).map(([name, value]) => ({
+                                                        name: name.replace('_', ' ').toUpperCase(),
+                                                        value
                                                     }))}
                                                     cx="50%"
                                                     cy="50%"
@@ -204,7 +202,7 @@ export default function ReportsAnalyticsPage() {
                                                         <Cell key={`cell-${index}`} fill={['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 5]} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip 
+                                                <Tooltip
                                                     contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                                                     itemStyle={{ color: '#fff' }}
                                                     formatter={(value: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, 'Amount']}
@@ -244,12 +242,12 @@ export default function ReportsAnalyticsPage() {
                                                         <span className="text-slate-900 dark:text-white">₹{(value as number).toLocaleString('en-IN')}</span>
                                                     </div>
                                                     <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full rounded-full transition-all duration-1000" 
-                                                            style={{ 
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-1000"
+                                                            style={{
                                                                 width: `${((value as number) / (data.summary.totalIncome + data.summary.totalExpense)) * 100}%`,
                                                                 backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 5]
-                                                            }} 
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>
