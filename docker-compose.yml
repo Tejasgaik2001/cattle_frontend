@@ -1,13 +1,36 @@
 version: '3.8'
 
 services:
-  frontend:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mycowfarm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-MyCow2026Strong}
+      POSTGRES_DB: ${DB_DATABASE:-mycowfarm}
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend service (optional - for full containerized deployment)
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cattle-frontend
+    container_name: mycowfarm-api
     restart: unless-stopped
     ports:
-      - '5174:3000'
+      - '3005:3000'
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-MyCow2026Strong}
+      - DB_DATABASE=${DB_DATABASE:-mycowfarm}
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
