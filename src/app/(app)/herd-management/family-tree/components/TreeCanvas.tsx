@@ -8,8 +8,8 @@ import { FamilyNode } from './FamilyNode';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export const NODE_WIDTH = 240;
-export const NODE_HEIGHT = 135;
+export const NODE_WIDTH = 270;
+export const NODE_HEIGHT = 160;
 
 interface TreeCanvasProps {
     nodes: PedigreeNode[];

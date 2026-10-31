@@ -74,11 +74,11 @@ export const FamilyNode = React.memo(function FamilyNode({
     return (
         <div
             style={style}
-            className="p-1 box-border select-none"
+            className="p-2.5 box-border select-none"
         >
             <div
                 onClick={() => onSelectRoot(node.id)}
-                className={`w-full h-full rounded-xl border-2 ${borderColor} ${bgColor} ${rootClasses} flex flex-col justify-between overflow-hidden cursor-pointer backdrop-blur-sm transition-all duration-200 group relative`}
+                className={`w-full h-full rounded-xl border-2 ${borderColor} ${bgColor} ${rootClasses} flex flex-col justify-between overflow-hidden cursor-pointer backdrop-blur-sm transition-all duration-200 group relative shadow-sm`}
             >
                 {/* Top Header Strip */}
                 <div className={`px-2.5 py-1 ${headerBg} flex items-center justify-between border-b border-black/5 dark:border-white/5`}>
@@ -140,12 +140,12 @@ export const FamilyNode = React.memo(function FamilyNode({
                             <span className="truncate">{node.source || 'Semen Straw'}</span>
                         </div>
                     ) : (
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Calendar className="w-3 h-3 shrink-0" />
-                            <span>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3 shrink-0 text-slate-400" />
+                            <span className="font-medium">
                                 {node.dateOfBirth 
-                                    ? new Date(node.dateOfBirth).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) 
-                                    : 'DOB unknown'}
+                                    ? `DOB: ${new Date(node.dateOfBirth).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}` 
+                                    : 'DOB: Unknown'}
                             </span>
                         </div>
                     )}
