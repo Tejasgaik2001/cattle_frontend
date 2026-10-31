@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MainNav } from './MainNav';
 import { UserMenu } from './UserMenu';
 import { ThemeToggle } from '../theme/theme-toggle';
-import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart, Wallet, Shield } from 'lucide-react';
+import { LayoutDashboard, UsersRound, HeartPulse, Landmark, BarChart, Wallet, Shield, GitFork } from 'lucide-react';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -25,6 +25,7 @@ export function AppShell({ children, user, onLogout }: AppShellProps) {
     const navigationItems = [
         { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { label: 'Herd', href: '/herd-management', icon: UsersRound },
+        { label: 'Family Tree', href: '/herd-management/family-tree', icon: GitFork },
         { label: 'Financials', href: '/financials', icon: Wallet },
         { label: 'Health', href: '/health-breeding', icon: HeartPulse },
         { label: 'Production', href: '/production-finance', icon: Landmark },
@@ -34,10 +35,24 @@ export function AppShell({ children, user, onLogout }: AppShellProps) {
 
 
     // Augment navigation items with isActive based on current path
-    const fullNavigationItems = navigationItems.map(item => ({
-        ...item,
-        isActive: pathname === item.href || pathname.startsWith(`${item.href}/`),
-    }));
+    const fullNavigationItems = navigationItems.map(item => {
+        if (item.href === '/herd-management/family-tree') {
+            return {
+                ...item,
+                isActive: pathname === '/herd-management/family-tree' || pathname.startsWith('/herd-management/family-tree/'),
+            };
+        }
+        if (item.href === '/herd-management') {
+            return {
+                ...item,
+                isActive: pathname === '/herd-management' || (pathname.startsWith('/herd-management/') && !pathname.startsWith('/herd-management/family-tree')),
+            };
+        }
+        return {
+            ...item,
+            isActive: pathname === item.href || pathname.startsWith(`${item.href}/`),
+        };
+    });
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">

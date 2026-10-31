@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ProductionFinance } from './components/ProductionFinance';
 import { productionFinanceApi, OperationalInsights } from '@/lib/api/production-finance';
 import { api } from '@/lib/api';
-import type { ProductionFinanceOverview } from '@/types';
+import type { ProductionFinanceOverview } from './types';
 
 export default function ProductionFinancePage() {
     const router = useRouter();
@@ -37,7 +37,7 @@ export default function ProductionFinancePage() {
                 productionFinanceApi.fetchInsights(farmId)
             ]);
 
-            setOverview(overviewData);
+            setOverview(overviewData as any);
             setInsights(insightsData);
             setRefreshKey(prev => prev + 1);
         } catch (err: any) {

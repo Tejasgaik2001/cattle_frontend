@@ -1,6 +1,6 @@
 import { api } from '../api';
 import { getFarmId } from '../farm';
-import type { Cow } from '@/types';
+import type { Cow, ExternalBull, PedigreeNode } from '@/types';
 
 export interface CreateCowDto {
     tagId: string;
@@ -12,6 +12,10 @@ export interface CreateCowDto {
     lifecycleStatus?: 'active' | 'sold' | 'deceased';
     acquisitionSource?: string;
     motherId?: string;
+    sireId?: string;
+    externalSireId?: string;
+    breedingMethod?: 'NATURAL' | 'AI';
+    bornOnFarm?: boolean;
 }
 
 export interface UpdateCowDto {
@@ -23,6 +27,10 @@ export interface UpdateCowDto {
     acquisitionDate?: string;
     acquisitionSource?: string;
     motherId?: string;
+    sireId?: string;
+    externalSireId?: string;
+    breedingMethod?: 'NATURAL' | 'AI';
+    bornOnFarm?: boolean;
 }
 
 export const cowsApi = {
@@ -99,7 +107,7 @@ export const cowsApi = {
     },
 
     /**
-     * Get active female cows (for dropdowns)
+     * Get active female cows (for dam dropdowns)
      */
     async getActiveFemales(): Promise<{ id: string; tagId: string; name: string | null }[]> {
         const response = await api.get(`/cows/active-females`);
@@ -107,10 +115,42 @@ export const cowsApi = {
     },
 
     /**
-     * Get family tree data for all cows
+     * Get active male bulls (for on-farm sire dropdowns)
      */
-    async getFamilyTree(): Promise<Cow[]> {
-        const response = await api.get(`/cows/family-tree`);
+    async getActiveMales(): Promise<{ id: string; tagId: string; name: string | null }[]> {
+        const response = await api.get(`/cows/active-males`);
+        return response.data;
+    },
+
+    /**
+     * Get all external bulls (for AI breeding)
+     */
+    async getExternalBulls(): Promise<ExternalBull[]> {
+        const response = await api.get(`/cows/external-bulls`);
+        return response.data;
+    },
+
+    /**
+     * Create an external bull record
+     */
+    async createExternalBull(data: {
+        name: string;
+        registrationNo: string;
+        breed?: string;
+        source?: string;
+        notes?: string;
+    }): Promise<ExternalBull> {
+        const response = await api.post(`/cows/external-bulls`, data);
+        return response.data;
+    },
+
+    /**
+     * Get family tree data for all cows in relatives-tree Node format
+     */
+    async getFamilyTree(rootId?: string): Promise<PedigreeNode[]> {
+        const response = await api.get(`/cows/family-tree`, {
+            params: rootId ? { rootId } : undefined,
+        });
         return response.data;
     },
 };

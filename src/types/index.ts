@@ -15,11 +15,49 @@ export interface Cow {
     acquisitionSource: string | null;
     acquisitionCost: number | null;
     motherId: string | null;
+    sireId?: string | null;
+    externalSireId?: string | null;
+    breedingMethod?: 'NATURAL' | 'AI' | null;
+    bornOnFarm?: boolean;
     // Sale information
     soldTo: string | null;
     soldPrice: number | null;
     soldDate: string | null;
     soldDescription: string | null;
+}
+
+/** External bull record used for Artificial Insemination (AI) */
+export interface ExternalBull {
+    id: string;
+    farmId: string;
+    name: string;
+    registrationNo: string;
+    breed: string | null;
+    source: string | null;
+    notes: string | null;
+    createdAt?: string;
+}
+
+/** relatives-tree compliant Node representation for cattle pedigree */
+export interface PedigreeNode {
+    id: string;
+    gender: 'male' | 'female';
+    parents: Array<{ id: string; type: 'blood' | 'married' }>;
+    children: Array<{ id: string; type: 'blood' | 'married' }>;
+    siblings: Array<{ id: string; type: 'blood' | 'married' }>;
+    spouses: Array<{ id: string; type: 'married' | 'blood' }>;
+    tagNumber: string;
+    name: string;
+    dateOfBirth?: string;
+    breed?: string;
+    bornOnFarm: boolean;
+    status: string; // active, sold, deceased
+    breedingMethod?: 'NATURAL' | 'AI' | null;
+    isExternal: boolean;
+    registrationNo?: string;
+    source?: string;
+    notes?: string;
+    photoUrl?: string | null;
 }
 
 // Metadata interfaces for CowEvent types
