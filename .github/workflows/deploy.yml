@@ -42,6 +42,6 @@ jobs:
             fi
 
             echo "Verifying frontend URL health..."
-            curl -f -L --max-time 30 https://cattlefronted.tejasgaikwad.in/ > /dev/null
+            curl -f -L --max-time 30 https://cattlefronted.tejasgaikwad.in/login/ > /dev/null
 
             echo "Frontend deployment verified successfully! Service is active and responding."
