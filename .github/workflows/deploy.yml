@@ -18,8 +18,30 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
+            set -e
+            echo "Navigating to frontend project directory..."
             cd /opt/cattle_management/cattle_frontend
+
+            echo "Pulling latest code from origin/master..."
             git fetch origin master
             git reset --hard origin/master
-            docker compose up -d --build
-            docker image prune -f
+
+            echo "Validating Docker Compose configuration..."
+            docker compose config -q
+
+            echo "Building and deploying only the frontend service..."
+            docker compose up -d --build --no-deps frontend
+
+            echo "Waiting 5 seconds for service initialization..."
+            sleep 5
+
+            echo "Verifying cattle-frontend container is running..."
+            if [ "$(docker inspect -f '{{.State.Running}}' cattle-frontend 2>/dev/null)" != "true" ]; then
+              echo "Deployment failed: cattle-frontend container is not running."
+              exit 1
+            fi
+
+            echo "Verifying frontend URL health..."
+            curl -f -L --max-time 30 https://cattlefronted.tejasgaikwad.in/ > /dev/null
+
+            echo "Frontend deployment verified successfully! Service is active and responding."
