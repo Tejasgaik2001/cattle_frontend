@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HerdList } from './components/HerdList';
 import { AddCowDialog } from './components/AddCowDialog';
+import { ExcelImportDialog } from './components/ExcelImportDialog';
 import { cowsApi } from '@/lib/api/cows';
 import type { Cow } from '@/types';
 
@@ -13,6 +14,7 @@ export default function HerdManagementPage() {
     const [cows, setCows] = useState<Cow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showAddCowDialog, setShowAddCowDialog] = useState(false);
+    const [showImportDialog, setShowImportDialog] = useState(false);
 
     const fetchCows = async () => {
         try {
@@ -55,6 +57,7 @@ export default function HerdManagementPage() {
             <HerdList
                 cows={cows}
                 onAddCow={() => setShowAddCowDialog(true)}
+                onImportExcel={() => setShowImportDialog(true)}
                 onViewCowDetails={handleViewCowDetails}
                 isLoading={isLoading}
             />
@@ -62,6 +65,12 @@ export default function HerdManagementPage() {
             <AddCowDialog
                 open={showAddCowDialog}
                 onOpenChange={setShowAddCowDialog}
+                onSuccess={handleAddCowSuccess}
+            />
+
+            <ExcelImportDialog
+                open={showImportDialog}
+                onOpenChange={setShowImportDialog}
                 onSuccess={handleAddCowSuccess}
             />
         </>

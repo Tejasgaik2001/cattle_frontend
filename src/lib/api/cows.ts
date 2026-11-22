@@ -1,5 +1,4 @@
 import { api } from '../api';
-import { getFarmId } from '../farm';
 import type { Cow, ExternalBull, PedigreeNode } from '@/types';
 
 export interface CreateCowDto {
@@ -31,6 +30,35 @@ export interface UpdateCowDto {
     externalSireId?: string;
     breedingMethod?: 'NATURAL' | 'AI';
     bornOnFarm?: boolean;
+}
+
+export interface BulkImportCowRow {
+    tagId: string;
+    name?: string;
+    gender: 'male' | 'female';
+    breed?: string;
+    dateOfBirth: string;
+    acquisitionDate?: string;
+    acquisitionSource?: string;
+    acquisitionCost?: number;
+    lifecycleStatus?: 'active' | 'sold' | 'deceased';
+    bornOnFarm?: boolean;
+    motherTagId?: string;
+    sireTagId?: string;
+    aiSireRegNo?: string;
+    aiSireName?: string;
+    aiSireBreed?: string;
+    breedingMethod?: 'NATURAL' | 'AI';
+}
+
+export interface BulkImportResult {
+    totalRows: number;
+    createdCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    errorCount: number;
+    errors: Array<{ row: number; tagId?: string; message: string }>;
+    pedigreeLinkedCount: number;
 }
 
 export const cowsApi = {
@@ -151,6 +179,14 @@ export const cowsApi = {
         const response = await api.get(`/cows/family-tree`, {
             params: rootId ? { rootId } : undefined,
         });
+        return response.data;
+    },
+
+    /**
+     * Bulk import cattle from Excel/CSV parsed records with family tree pedigree
+     */
+    async bulkImportCows(cows: BulkImportCowRow[]): Promise<BulkImportResult> {
+        const response = await api.post(`/cows/bulk-import`, { cows });
         return response.data;
     },
 };

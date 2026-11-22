@@ -8,16 +8,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ChevronRight, XIcon, Users } from 'lucide-react';
+import { PlusCircle, Search, ChevronRight, XIcon, Users, FileSpreadsheet } from 'lucide-react';
 
 interface HerdListProps {
     cows: Cow[];
     onAddCow: () => void;
     onViewCowDetails: (cowId: string) => void;
+    onImportExcel?: () => void;
     isLoading?: boolean;
 }
 
-export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }: HerdListProps) {
+export function HerdList({ cows, onAddCow, onViewCowDetails, onImportExcel, isLoading = false }: HerdListProps) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,10 +77,22 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
                             Clear Filter
                         </Button>
                     ) : (
-                        <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            <PlusCircle className="h-5 w-5 mr-2" />
-                            Add Your First Cow
-                        </Button>
+                        <div className="flex gap-3">
+                            <Button onClick={onAddCow} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                                <PlusCircle className="h-5 w-5 mr-2" />
+                                Add Your First Cow
+                            </Button>
+                            {onImportExcel && (
+                                <Button 
+                                    variant="outline" 
+                                    onClick={onImportExcel} 
+                                    className="border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 font-bold"
+                                >
+                                    <FileSpreadsheet className="h-5 w-5 mr-2" />
+                                    Import from Excel
+                                </Button>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
@@ -102,6 +115,16 @@ export function HerdList({ cows, onAddCow, onViewCowDetails, isLoading = false }
                     )}
                 </div>
                 <div className="flex gap-2">
+                    {onImportExcel && (
+                        <Button 
+                            variant="outline" 
+                            onClick={onImportExcel}
+                            className="text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950 font-bold"
+                        >
+                            <FileSpreadsheet className="h-5 w-5 mr-2" />
+                            Import Excel
+                        </Button>
+                    )}
                     <Button 
                         variant="outline" 
                         onClick={() => router.push('/herd-management/family-tree')}
