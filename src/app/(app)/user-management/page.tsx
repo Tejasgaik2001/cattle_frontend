@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, UserPlus, Shield, ShieldAlert, Trash2, Edit, Loader2, Search, XIcon } from 'lucide-react';
+import { Users, UserPlus, Shield, ShieldAlert, Trash2, Edit, Loader2, Search, XIcon, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ export default function UserManagementPage() {
     const [currentUserRole, setCurrentUserRole] = useState<string>('worker');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     const [formData, setFormData] = useState({
         email: '',
@@ -44,28 +45,60 @@ export default function UserManagementPage() {
     });
 
     useEffect(() => {
-        fetchUsers();
-        fetchCurrentUser();
+        loadData();
     }, []);
 
-    const fetchUsers = async () => {
+    const loadData = async () => {
+        setIsLoading(true);
+        setErrorMessage(null);
         try {
+            // First try fetching current user to establish role
+            try {
+                const meRes = await api.get('/users/me');
+                if (meRes.data?.globalRole) {
+                    setCurrentUserRole(meRes.data.globalRole);
+                }
+            } catch (err) {
+                console.warn('Could not determine current user role:', err);
+            }
+
+            // Fetch users list
             const response = await api.get('/users');
-            setUsers(response.data);
-        } catch (error) {
+            setUsers(Array.isArray(response.data) ? response.data : []);
+        } catch (error: any) {
             console.error('Error fetching users:', error);
-            toast.error('Failed to fetch users');
+            let msg = 'Failed to fetch users';
+            if (error.response?.status === 403) {
+                msg = 'Access denied: Admin privileges are required to view the user list.';
+            } else if (error.code === 'ERR_NETWORK' || !error.response) {
+                msg = 'Unable to connect to the backend server. Please verify the server is running.';
+            } else if (error.response?.data?.message) {
+                msg = error.response.data.message;
+            }
+            setErrorMessage(msg);
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const fetchCurrentUser = async () => {
+    const fetchUsers = async () => {
         try {
-            const response = await api.get('/users/me');
-            setCurrentUserRole(response.data.globalRole);
-        } catch (error) {
-            console.error('Error fetching current user:', error);
+            const response = await api.get('/users');
+            setUsers(Array.isArray(response.data) ? response.data : []);
+            setErrorMessage(null);
+        } catch (error: any) {
+            console.error('Error fetching users:', error);
+            let msg = 'Failed to fetch users';
+            if (error.response?.status === 403) {
+                msg = 'Access denied: Admin privileges are required to view the user list.';
+            } else if (error.code === 'ERR_NETWORK' || !error.response) {
+                msg = 'Unable to connect to the backend server. Please verify the server is running.';
+            } else if (error.response?.data?.message) {
+                msg = error.response.data.message;
+            }
+            setErrorMessage(msg);
+            toast.error(msg);
         }
     };
 
@@ -151,13 +184,13 @@ export default function UserManagementPage() {
         }
     };
 
-    const canManageUsers = currentUserRole === 'super_admin' || currentUserRole === 'admin';
+    const canManageUsers = currentUserRole === 'super_admin' || currentUserRole === 'admin' || currentUserRole === 'sub_admin';
     const canUpdateRoles = currentUserRole === 'super_admin';
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
             </div>
         );
     }
@@ -248,6 +281,12 @@ export default function UserManagementPage() {
                                                 <option value="super_admin">Super Admin</option>
                                             </>
                                         )}
+                                        {currentUserRole === 'admin' && (
+                                            <>
+                                                <option value="sub_admin">Sub Admin</option>
+                                                <option value="worker">Worker</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                                 <div className="flex gap-2 justify-end">
@@ -271,6 +310,25 @@ export default function UserManagementPage() {
                     </Dialog>
                 )}
             </div>
+
+            {/* Error Banner with Retry */}
+            {errorMessage && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+                        <p className="text-sm text-red-800 dark:text-red-300 font-medium">{errorMessage}</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={loadData}
+                        className="border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 shrink-0"
+                    >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Retry
+                    </Button>
+                </div>
+            )}
 
             {/* Search and Filter */}
             <div className="flex flex-col md:flex-row gap-4">
@@ -309,10 +367,11 @@ export default function UserManagementPage() {
                 </div>
             </div>
 
+            {/* Desktop Table View */}
             <div className="hidden md:block bg-white dark:bg-slate-800/50 rounded-lg shadow-sm overflow-hidden">
                 <table className="w-full font-sans">
                     <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-900/60 border-b-slate-200 dark:border-b-slate-700">
+                        <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700">
                             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">User</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
@@ -434,10 +493,18 @@ export default function UserManagementPage() {
                 ))}
             </div>
 
-            {/* No results message */}
+            {/* Empty States */}
             {filteredUsers.length === 0 && users.length > 0 && (
                 <div className="text-center py-8">
                     <p className="text-slate-500 dark:text-slate-400">No users match your search criteria.</p>
+                </div>
+            )}
+
+            {!errorMessage && users.length === 0 && (
+                <div className="bg-white dark:bg-slate-800/50 rounded-lg p-8 text-center space-y-2 border border-slate-200 dark:border-slate-700">
+                    <Users className="h-10 w-10 text-slate-400 mx-auto mb-2" />
+                    <p className="text-slate-700 dark:text-slate-300 font-medium">No users found</p>
+                    <p className="text-xs text-slate-500">There are currently no users registered in the system.</p>
                 </div>
             )}
 
